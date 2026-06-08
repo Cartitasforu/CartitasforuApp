@@ -100,7 +100,7 @@ $$ LANGUAGE plpgsql;
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS "user" (
-    id                  UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id                  UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     email               VARCHAR(255)  NOT NULL UNIQUE,
     full_name           VARCHAR(150)  NOT NULL,
     nickname            VARCHAR(80),
@@ -148,7 +148,7 @@ CREATE TRIGGER trg_user_updated_at
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS user_consent (
-    id              UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id              UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID              NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     document_type   consent_document  NOT NULL,
     version         VARCHAR(20)       NOT NULL,
@@ -174,7 +174,7 @@ CREATE INDEX IF NOT EXISTS idx_consent_user ON user_consent(user_id);
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS space (
-    id                  UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id                  UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
     name                VARCHAR(100) NOT NULL DEFAULT 'Nuestro espacio',
     known_date          DATE,
     official_date       DATE,
@@ -205,7 +205,7 @@ CREATE TRIGGER trg_space_updated_at
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS space_member (
-    id          UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID              NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     space_id    UUID              NOT NULL REFERENCES space(id)  ON DELETE CASCADE,
     role        space_member_role NOT NULL DEFAULT 'member',
@@ -223,7 +223,7 @@ CREATE INDEX IF NOT EXISTS idx_space_member_space ON space_member(space_id);
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS invitation (
-    id          UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id    UUID              NOT NULL REFERENCES space(id) ON DELETE CASCADE,
     invited_by  UUID              NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     code        VARCHAR(10)       NOT NULL UNIQUE,
@@ -250,7 +250,7 @@ CREATE INDEX IF NOT EXISTS idx_invitation_space ON invitation(space_id);
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS special_date (
-    id                  UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id            UUID        NOT NULL REFERENCES space(id) ON DELETE CASCADE,
     created_by          UUID        NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     title               VARCHAR(150) NOT NULL,
@@ -280,7 +280,7 @@ CREATE INDEX IF NOT EXISTS idx_special_date_date  ON special_date(date);
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS letter (
-    id              UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id              UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id        UUID          NOT NULL REFERENCES space(id) ON DELETE CASCADE,
     created_by      UUID          NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     directed_to     UUID          REFERENCES "user"(id) ON DELETE SET NULL,
@@ -319,7 +319,7 @@ CREATE TRIGGER trg_letter_updated_at
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS photo (
-    id                  UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id            UUID        NOT NULL REFERENCES space(id) ON DELETE CASCADE,
     uploaded_by         UUID        NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     url                 TEXT        NOT NULL,
@@ -396,7 +396,7 @@ CREATE TRIGGER trg_photo_storage
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS reaction (
-    id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID        NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     target_type VARCHAR(20) NOT NULL,
     -- 'photo' | 'letter'
@@ -420,7 +420,7 @@ CREATE INDEX IF NOT EXISTS idx_reaction_target ON reaction(target_type, target_i
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS comment (
-    id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID        NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     target_type VARCHAR(20) NOT NULL,
     -- 'photo' | 'letter'
@@ -441,7 +441,7 @@ CREATE INDEX IF NOT EXISTS idx_comment_target ON comment(target_type, target_id)
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS board (
-    id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id    UUID        NOT NULL UNIQUE REFERENCES space(id) ON DELETE CASCADE,
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -459,7 +459,7 @@ CREATE TRIGGER trg_create_board_on_space
     FOR EACH ROW EXECUTE FUNCTION create_board_for_space();
 
 CREATE TABLE IF NOT EXISTS post_it (
-    id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     board_id    UUID        NOT NULL REFERENCES board(id) ON DELETE CASCADE,
     created_by  UUID        NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     note        TEXT        NOT NULL,
@@ -498,7 +498,7 @@ CREATE TRIGGER trg_board_updated_on_postit
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS goal (
-    id              UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id              UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     space_id        UUID          NOT NULL REFERENCES space(id) ON DELETE CASCADE,
     created_by      UUID          NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     title           VARCHAR(200)  NOT NULL,
@@ -532,7 +532,7 @@ CREATE TRIGGER trg_goal_updated_at
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS member_location (
-    id          UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID    NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     space_id    UUID    NOT NULL REFERENCES space(id)  ON DELETE CASCADE,
     latitude    FLOAT   NOT NULL CHECK (latitude  BETWEEN -90  AND 90),
@@ -554,7 +554,7 @@ CREATE INDEX IF NOT EXISTS idx_member_location_space ON member_location(space_id
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS notification (
-    id          UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID              NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     type        notification_type NOT NULL,
     title       VARCHAR(150)      NOT NULL,
@@ -583,7 +583,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_user_unread
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS push_token (
-    id          UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID          NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     token       TEXT          NOT NULL UNIQUE,
     platform    platform_type NOT NULL,
@@ -606,7 +606,7 @@ CREATE TRIGGER trg_push_token_updated_at
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS subscription (
-    id          UUID                PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID                PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID                NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     plan        subscription_plan   NOT NULL DEFAULT 'free',
     status      subscription_status NOT NULL DEFAULT 'active',
@@ -632,7 +632,7 @@ CREATE TRIGGER trg_subscription_updated_at
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS content_report (
-    id          UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id          UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     reported_by UUID          NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     target_type VARCHAR(20)   NOT NULL,
     -- 'photo' | 'letter' | 'post_it' | 'comment'
@@ -658,7 +658,7 @@ CREATE INDEX IF NOT EXISTS idx_report_status ON content_report(status) WHERE sta
 -- =============================================================
 
 CREATE TABLE IF NOT EXISTS audit_log (
-    id           UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     actor_id     UUID          REFERENCES "user"(id) ON DELETE SET NULL,
     -- NULL si fue una acción del sistema
     action       audit_action  NOT NULL,
