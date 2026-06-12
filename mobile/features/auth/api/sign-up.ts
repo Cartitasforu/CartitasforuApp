@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { SignUpFormData } from "../schemas/sign-up.schema";
+import userAlreadyExists from "@/lib/userAlreadyExists";
 
 export async function signUp(data: SignUpFormData){
     const { email, password } = data;
@@ -8,14 +9,18 @@ export async function signUp(data: SignUpFormData){
         email,
         password
     })
+    const userExists = await userAlreadyExists(email);
 
+    console.log(userExists)
+
+    if(userExists){
+        throw new Error("Ya hay un usuario registrado con este email.")
+    }
+    
     if(error){
         console.error("Supabase signUp error:", error.message, error.status);
 
-        // Mensajes específicos en lugar de uno genérico
-        if (error.message.includes("already registered")) {
-          throw new Error("Este correo ya tiene una cuenta registrada.");
-        }
+        
         if (error.message.includes("Password")) {
           throw new Error("La contraseña no cumple los requisitos mínimos.");
         }
