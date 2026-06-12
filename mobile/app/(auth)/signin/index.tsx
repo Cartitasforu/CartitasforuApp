@@ -6,7 +6,10 @@ export default function SignInScreen() {
     <View>
       <Text>Sign In</Text>
       <TouchableOpacity onPress={() => router.replace("/signup")}>
-              <Text>No tienes cuenta? Registrate aquí</Text>
+        <Text>No tienes cuenta? Registrate aquí</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => router.push("/signin/sign-in-form")}>
+        <Text>Iniciar con correo y contraseña</Text>
       </TouchableOpacity>
     </View>
   );
