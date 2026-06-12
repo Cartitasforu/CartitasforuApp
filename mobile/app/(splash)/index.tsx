@@ -10,7 +10,6 @@ export default function SplashScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (session) {
-        console.log(session)
         router.replace("/(app)/home");
       } else {
         router.replace("/(auth)/signin");

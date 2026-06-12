@@ -3,7 +3,7 @@ import React from 'react'
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { signUp } from '@/features/auth/api/sign-up';
-import { Alert, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import { AppText } from '@/components/ui/app-text';
 import { AppInput } from '@/components/ui/app-input';
@@ -36,7 +36,11 @@ export default function SignUpScreen () {
     }
   return (
     <View className="flex-1 bg-bgPink px-5 pt-10">
+
       <View className="gap-2 mb-20">
+        <TouchableOpacity onPress={() => router.replace("/verify-email")}>
+          <Text>Verificacion</Text>
+        </TouchableOpacity>
         <AppText variant="display" className="text-display text-center pt-40 pb-4">
           Registrate
         </AppText>
