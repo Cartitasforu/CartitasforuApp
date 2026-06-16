@@ -1,0 +1,2 @@
+ALTER TABLE public.user
+ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ NULL;
