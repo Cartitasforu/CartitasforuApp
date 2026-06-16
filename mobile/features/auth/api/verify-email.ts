@@ -1,14 +1,14 @@
 import { supabase } from "@/lib/supabase";
 
-export default async function otpVerify(email: string, otp: string){
+export default async function otpVerify(email: string, token: string){
     const { data, error } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token: otp, 
+      email,
+      token,
       type: "email",
     });
 
     if(error){
-        throw error
+        throw new Error(error.message)
     }
 
     return data

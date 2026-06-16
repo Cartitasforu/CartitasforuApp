@@ -1,39 +1,84 @@
 import { AppButton } from "@/components/ui/app-button";
-import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
-import { router } from "expo-router";
-import { ChangeEvent, useState } from "react";
-import { View, Text, TouchableOpacity, Pressable, Alert } from "react-native";
-
-interface VerificationCode {
-  input1: string,
-  input2: string,
-  input3: string,
-  input4: string,
-  input5: string,
-  input6: string,
-}
+import otpVerify from "@/features/auth/api/verify-email";
+import { router, useLocalSearchParams } from "expo-router";
+import { useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Pressable,
+  Alert,
+  TextInput,
+} from "react-native";
 
 export default function VerifyEmailScreen() {
-  const [code, setCode] = useState<VerificationCode>({
-    input1: '',
-    input2: '',
-    input3: '',
-    input4: '',
-    input5: '',
-    input6: ''
-  })
+  const length = 6;
+  const [code, setCode] = useState<string[]>(new Array(length).fill(""));
+  const {email} = useLocalSearchParams<{email: string}>()
 
-  
+  const inputRef = useRef<(TextInput | null)[]>([]);
 
-  const codeDigits: string = `${code.input1}${code.input2}${code.input3}${code.input4}${code.input5}${code.input6}`; 
+  const handleChange = (text: string, index: number) => {
+    const cleanCode = text.replace(/[^0-9]/g, "");
 
-  const handleVerify = () => {
-    console.log(codeDigits)
-    Alert.alert(codeDigits)
-  }
+    if (cleanCode === "") {
+      setCode((currentCode) => {
+        const nextCode = [...currentCode];
+        const hadValue = nextCode[index] !== "";
+        nextCode[index] = "";
+
+        if (hadValue && index > 0) {
+          setTimeout(() => {
+            inputRef.current[index - 1]?.focus();
+          }, 10);
+        }
+
+        return nextCode;
+      });
+      return;
+    }
+
+    setCode((currentCode) => {
+      const nextCode = [...currentCode];
+      const digits = cleanCode.slice(0, length - index).split("");
+
+      digits.forEach((digit, offset) => {
+        nextCode[index + offset] = digit;
+      });
+
+      const nextFocusIndex = Math.min(index + digits.length, length - 1);
+
+      if (index + digits.length < length) {
+        setTimeout(() => {
+          inputRef.current[index + digits.length]?.focus();
+        }, 10);
+      } else {
+        setTimeout(() => {
+          inputRef.current[nextFocusIndex]?.blur();
+        }, 10);
+      }
+
+      return nextCode;
+    });
+  };
 
 
+
+  const handleVerify = async () => {
+    const codeDigits = code.join("");
+
+    if (codeDigits.length !== length) {
+      Alert.alert("Código incompleto", "Ingresa los 6 dígitos del código.");
+      return;
+    }
+
+    await otpVerify(email, codeDigits)
+
+      
+    Alert.alert("Verificado", "Bienvenido");
+    router.replace("/home")
+  };
 
   return (
     <View className="flex-1 bg-bgPink px-10 pt-10">
@@ -59,42 +104,19 @@ export default function VerifyEmailScreen() {
         </View>
       </View>
       <View className="flex flex-row gap-3 items-center justify-center">
-        <AppInput
-          className="w-12 h-12 text-center"
-          maxLength={1}
-          value={code.input1}
-          onChangeText={(newInput) => setCode({ ...code, input1: newInput })}
-        />
-        <AppInput
-          className="w-12 h-12 text-center"
-          maxLength={1}
-          value={code.input2}
-          onChangeText={(newInput) => setCode({ ...code, input2: newInput })}
-        />
-        <AppInput
-          className="w-12 h-12 text-center"
-          maxLength={1}
-          value={code.input3}
-          onChangeText={(newInput) => setCode({ ...code, input3: newInput })}
-        />
-        <AppInput
-          className="w-12 h-12 text-center"
-          maxLength={1}
-          value={code.input4}
-          onChangeText={(newInput) => setCode({ ...code, input4: newInput })}
-        />
-        <AppInput
-          className="w-12 h-12 text-center"
-          maxLength={1}
-          value={code.input5}
-          onChangeText={(newInput) => setCode({ ...code, input5: newInput })}
-        />
-        <AppInput
-          className="w-12 h-12 text-center"
-          maxLength={1}
-          value={code.input6}
-          onChangeText={(newInput) => setCode({ ...code, input6: newInput })}
-        />
+        {code.map((value, index) => (
+          <TextInput
+            key={index}
+            ref={(element: any) => (inputRef.current[index] = element)}
+            className="w-12 h-12 rounded-card border-roseBorder bg-white text-center text-wineDark"
+            keyboardType="numeric"
+            maxLength={1}
+            value={value}
+            onChangeText={(text) => handleChange(text, index)}
+            textContentType="oneTimeCode"
+            autoFocus={index === 0}
+          />
+        ))}
       </View>
       <View className="flex flex-row items-center justify-center pt-4 pb-6">
         <AppText>No recibiste el código? </AppText>
