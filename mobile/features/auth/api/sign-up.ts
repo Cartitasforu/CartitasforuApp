@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { SignUpFormData } from "../schemas/sign-up.schema";
 import userAlreadyExists from "@/lib/userAlreadyExists";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export async function signUp(data: SignUpFormData) {
   const { email, password } = data;
@@ -16,6 +17,8 @@ export async function signUp(data: SignUpFormData) {
     email,
     password,
   });
+
+  await AsyncStorage.setItem("pending_verification_email", email);
 
   if (error) {
     console.error("Supabase signUp error:", error.message, error.status);

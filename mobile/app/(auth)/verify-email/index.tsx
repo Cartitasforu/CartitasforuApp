@@ -2,6 +2,7 @@ import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { resendOtpCode } from "@/features/auth/api/resend-otp";
 import otpVerify from "@/features/auth/api/verify-email";
+import { useAuth } from "@/providers/AuthProvider";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -17,6 +18,8 @@ export default function VerifyEmailScreen() {
   const length = 6;
   const [code, setCode] = useState<string[]>(new Array(length).fill(""));
   const {email} = useLocalSearchParams<{email: string}>()
+
+  const {refreshProfile} = useAuth()
 
   const inputRef = useRef<(TextInput | null)[]>([]);
 
@@ -95,10 +98,11 @@ export default function VerifyEmailScreen() {
     }
 
     await otpVerify(email, codeDigits)
+    await refreshProfile()
 
       
     Alert.alert("Verificado", "Bienvenido");
-    router.replace("/home")
+    //router.replace("/(onboarding)")
   };
 
   const handleResend = async () => {
