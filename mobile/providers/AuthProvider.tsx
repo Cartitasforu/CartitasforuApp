@@ -3,14 +3,24 @@ import { Session } from "@supabase/supabase-js"
 import { router } from "expo-router";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
+
+type UserProfile = {
+  id: string,
+  email_verified_at: string | null
+}
+
 type AuthData = {
     loading: boolean,
-    session: Session | null;
+    session: Session | null,
+    profile: UserProfile | null,
+    refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthData>({
     loading: true,
-    session: null
+    session: null,
+    profile: null,
+    refreshProfile: async () => {}
 })
 
 interface Props {
@@ -20,6 +30,33 @@ interface Props {
 export default function AuthProvider({children}: Props){
     const [loading, setLoading] = useState<boolean>(true);
     const [session, setSession] = useState<Session | null>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null)
+
+    async function loadProfile(userId: string){
+      const {data, error} = await supabase
+      .from("user")
+      .select("id, email_verified_at")
+      .eq("id", userId)
+      .single()
+
+      if(error){
+        console.log("Error loading profile: ", error.message)
+        setProfile(null)
+        return
+      }
+      setProfile(data)
+    }
+
+    async function refreshProfile(){
+      const userId = session?.user?.id
+
+      if(!userId){
+        setProfile(null)
+        return
+      }
+      await loadProfile(userId)
+      console.log(profile)
+    }
 
     
 
@@ -35,8 +72,17 @@ export default function AuthProvider({children}: Props){
           }
 
           if(!mounted) return;
-
-          setSession(data.session ?? null)
+          
+          const currentSession = data.session ?? null
+          setSession(currentSession)
+          
+          if(currentSession?.user?.id){
+            await loadProfile(currentSession.user.id)
+          } else {
+            setProfile(null)
+          }
+          
+          if(!mounted) return;
 
           setLoading(false);
         }
@@ -45,6 +91,13 @@ export default function AuthProvider({children}: Props){
 
       const {data: authListener} = supabase.auth.onAuthStateChange(async (_, session) => {
         setSession(session ?? null)
+
+        if(session?.user?.id){
+          await loadProfile(session.user.id)
+        } else {
+          setProfile(null)
+        }
+
         setLoading(false)
 
       })
@@ -55,7 +108,13 @@ export default function AuthProvider({children}: Props){
       }
     }, [])
 
-    const value = useMemo(() => ({loading, session}), [loading, session])
+    const value = useMemo(() => ({
+      loading,
+      session,
+      profile,
+      refreshProfile
+    }), [loading, session, profile]
+    )
 
     return (
         <AuthContext.Provider value={value}>

@@ -27,7 +27,10 @@ export default function SignUpScreen () {
             Alert.alert("Cuenta creada",
                 "Revisa tu correo para verificar tu cuenta"
             )
-            router.replace("/verify-email")
+            router.replace({ 
+              pathname: "/verify-email", 
+              params: { email: values.email } 
+            })
         } catch (error) {
             const message = error instanceof Error ? error.message : "Ocurrio un error inesperado"
 

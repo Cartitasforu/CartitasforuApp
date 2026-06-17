@@ -1,10 +1,115 @@
 import { AppButton } from "@/components/ui/app-button";
-import { AppInput } from "@/components/ui/app-input";
 import { AppText } from "@/components/ui/app-text";
-import { router } from "expo-router";
-import { View, Text, TouchableOpacity, Pressable, Alert } from "react-native";
+import { resendOtpCode } from "@/features/auth/api/resend-otp";
+import otpVerify from "@/features/auth/api/verify-email";
+import { useAuth } from "@/providers/AuthProvider";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Pressable,
+  Alert,
+  TextInput,
+} from "react-native";
 
 export default function VerifyEmailScreen() {
+  const length = 6;
+  const [code, setCode] = useState<string[]>(new Array(length).fill(""));
+  const {email} = useLocalSearchParams<{email: string}>()
+
+  const {refreshProfile} = useAuth()
+
+  const inputRef = useRef<(TextInput | null)[]>([]);
+
+  const [seconds, setSeconds] = useState(60);
+
+  useEffect(() => {
+    if (seconds <= 0) return;
+
+    const interval = setInterval(() => {
+      setSeconds((prevSeconds) => prevSeconds - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [seconds]);
+
+  const timeFormat = (time:number) => {
+    const minutes = Math.floor(time / 60);
+    const lastSeconds = time % 60;
+    return `${minutes < 10 ? "0" : ""}${minutes}:${
+      lastSeconds < 10 ? "0" : ""
+    }${lastSeconds}`;
+  };
+
+  const handleChange = (text: string, index: number) => {
+    const cleanCode = text.replace(/[^0-9]/g, "");
+
+    if (cleanCode === "") {
+      setCode((currentCode) => {
+        const nextCode = [...currentCode];
+        const hadValue = nextCode[index] !== "";
+        nextCode[index] = "";
+
+        if (hadValue && index > 0) {
+          setTimeout(() => {
+            inputRef.current[index - 1]?.focus();
+          }, 10);
+        }
+
+        return nextCode;
+      });
+      return;
+    }
+
+    setCode((currentCode) => {
+      const nextCode = [...currentCode];
+      const digits = cleanCode.slice(0, length - index).split("");
+
+      digits.forEach((digit, offset) => {
+        nextCode[index + offset] = digit;
+      });
+
+      const nextFocusIndex = Math.min(index + digits.length, length - 1);
+
+      if (index + digits.length < length) {
+        setTimeout(() => {
+          inputRef.current[index + digits.length]?.focus();
+        }, 10);
+      } else {
+        setTimeout(() => {
+          inputRef.current[nextFocusIndex]?.blur();
+        }, 10);
+      }
+
+      return nextCode;
+    });
+  };
+
+
+
+  const handleVerify = async () => {
+    const codeDigits = code.join("");
+
+    if (codeDigits.length !== length) {
+      Alert.alert("Código incompleto", "Ingresa los 6 dígitos del código.");
+      return;
+    }
+
+    await otpVerify(email, codeDigits)
+    await refreshProfile()
+
+      
+    Alert.alert("Verificado", "Bienvenido");
+    //router.replace("/(onboarding)")
+  };
+
+  const handleResend = async () => {
+    await resendOtpCode(email)
+    Alert.alert("Código nuevamente enviado");
+  }
+
   return (
     <View className="flex-1 bg-bgPink px-10 pt-10">
       <TouchableOpacity onPress={() => router.replace("/signup")}>
@@ -24,27 +129,43 @@ export default function VerifyEmailScreen() {
             Verifica tu cuenta
           </AppText>
           <AppText variant="caption" className="text-center">
-            Te hemos enviado un código de verificación de 4 dígitos
+            Te hemos enviado un código de verificación de 6 dígitos
           </AppText>
         </View>
       </View>
-      <View className="flex flex-row gap-6 items-center justify-center">
-        <AppInput className="w-16 h-16 text-center" />
-        <AppInput className="w-16 h-16 text-center" />
-        <AppInput className="w-16 h-16 text-center" />
-        <AppInput className="w-16 h-16 text-center" />
+      <View className="flex flex-row gap-3 items-center justify-center">
+        {code.map((value, index) => (
+          <TextInput
+            key={index}
+            ref={(element: any) => (inputRef.current[index] = element)}
+            className="w-12 h-12 rounded-card border-roseBorder bg-white text-center text-wineDark"
+            keyboardType="numeric"
+            maxLength={1}
+            value={value}
+            onChangeText={(text) => handleChange(text, index)}
+            textContentType="oneTimeCode"
+            autoFocus={index === 0}
+          />
+        ))}
       </View>
       <View className="flex flex-row items-center justify-center pt-4 pb-6">
+        <AppText>
+          {seconds > 0 ? (
+            <AppText>
+              El código se vencerá en: {timeFormat(seconds)}
+            </AppText>
+          ) : (
+            <AppText>Código expirado</AppText>
+          )}
+        </AppText>
+      </View>
+      {seconds === 0 && <View className="flex flex-row items-center justify-center pb-6">
         <AppText>No recibiste el código? </AppText>
-        <Pressable onPress={() => Alert.alert("Reenviar")}>
+        <Pressable onPress={handleResend}>
           <Text className="text-primaryDeep">Reenviar</Text>
         </Pressable>
-      </View>
-      <AppButton
-        title="Verificar"
-        onPress={() => Alert.alert("verificado")}
-        className="mt-2"
-      />
+      </View>}
+      <AppButton title="Verificar" onPress={handleVerify} className="mt-2" />
     </View>
   );
 }
