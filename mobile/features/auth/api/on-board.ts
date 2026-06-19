@@ -8,7 +8,7 @@ export async function completeProfile(userId: string, data: OnBoardidngFormData,
         .from('profile-images')
         .getPublicUrl(filePath);
 
-    const {data: body, error} = await supabase
+    const {error} = await supabase
     .from("user")
     .update({full_name, birth_date, nickname, gender, interests, profile_photo_url: urlData, onboarding_completed: true})
     .eq("id", userId)

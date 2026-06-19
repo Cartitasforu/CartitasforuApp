@@ -4,7 +4,6 @@ import { decode } from "base64-arraybuffer";
 export async function uploadToStorage(image: any) {
   const imageToBase64 = image.base64;
   const fileExt = image.uri.split(".").pop()?.toLowerCase() || "jpg";
-  const fileName = `${Date.now()}.${fileExt}`;
   const {
     data: { user },
     error: userError,

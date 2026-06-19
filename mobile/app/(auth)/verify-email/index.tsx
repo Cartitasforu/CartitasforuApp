@@ -1,7 +1,6 @@
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { changeWrongEmail } from "@/features/auth/api/change-wrong-email";
-import { logOut } from "@/features/auth/api/log-out";
 import { resendOtpCode } from "@/features/auth/api/resend-otp";
 import otpVerify from "@/features/auth/api/verify-email";
 import { useAuth } from "@/providers/AuthProvider";

@@ -1,7 +1,6 @@
 // components/interests-picker.tsx
 import { useState } from "react";
 import {
-  FlatList,
   Modal,
   Pressable,
   TouchableOpacity,
