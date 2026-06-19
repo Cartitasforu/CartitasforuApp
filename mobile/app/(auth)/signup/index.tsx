@@ -40,11 +40,8 @@ export default function SignUpScreen () {
   return (
     <View className="flex-1 bg-bgPink px-5 pt-10">
       <View className="gap-2 mb-20">
-        <TouchableOpacity onPress={() => router.replace("/verify-email")}>
-          <Text>Verificacion</Text>
-        </TouchableOpacity>
         <TouchableOpacity onPress={() => router.replace("/signin")}>
-          <Text>Volver</Text>
+          <Text>{"<-- "} Volver</Text>
         </TouchableOpacity>
         <AppText
           variant="display"
