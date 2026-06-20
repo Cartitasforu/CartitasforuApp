@@ -30,6 +30,7 @@ function RootNavigationGate() {
 
     const inAuthGroup = firstSegment === "(auth)"
     const inOnboardingGroup = firstSegment === "(onboarding)"
+    const inAppGroup = firstSegment === "(app)"
     const isVerifyOtpScreen = inAuthGroup && segments[1] === "verify-email";
 
     if (!session && pendingEmail) {
@@ -59,9 +60,18 @@ function RootNavigationGate() {
       return
     }
 
-    if(session && profile?.email_verified_at) {
+    if(session && profile?.email_verified_at && !profile?.onboarding_completed) {
       if(!inOnboardingGroup){
-        router.replace("/(onboarding)")
+        router.replace({
+          pathname: "/(onboarding)",
+          params: {userId: session.user.id ?? ""}
+        })
+      }
+    }
+
+    if(session && profile?.email_verified_at && profile.onboarding_completed){
+      if(!inAppGroup){
+        router.replace("/(app)/home")
       }
     }
   

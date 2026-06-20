@@ -95,11 +95,18 @@ export default function VerifyEmailScreen() {
       return;
     }
 
-    await otpVerify(email, codeDigits);
-    await refreshProfile();
+    try {
+      await otpVerify(email, codeDigits)
+      await refreshProfile()
 
-    Alert.alert("Verificado", "Bienvenido");
-    //router.replace("/(onboarding)")
+      Alert.alert("Verificado", "Bienvenido");
+      router.replace("/(onboarding)")
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "No se pudo verificar el código";
+
+      Alert.alert("Verificación fallida", message);
+    }
   };
 
   const handleResend = async () => {
@@ -110,6 +117,11 @@ export default function VerifyEmailScreen() {
   const handleCorrectEmail = async () => {
     await deleteOwnAccount()
     router.replace("/(auth)/signup")
+  }
+
+  const handleChangeWrongEmail = async () => {
+    await changeWrongEmail()
+    router.replace("/(auth)/signin")
   }
 
   return (

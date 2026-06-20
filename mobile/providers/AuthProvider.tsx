@@ -1,12 +1,13 @@
+import { logOut } from "@/features/auth/api/log-out";
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js"
-import { router } from "expo-router";
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 
 type UserProfile = {
   id: string,
-  email_verified_at: string | null
+  email_verified_at: string | null,
+  onboarding_completed: boolean | null
 }
 
 type AuthData = {
@@ -35,28 +36,38 @@ export default function AuthProvider({children}: Props){
     async function loadProfile(userId: string){
       const {data, error} = await supabase
       .from("user")
-      .select("id, email_verified_at")
+      .select("id, email_verified_at, onboarding_completed")
       .eq("id", userId)
-      .single()
+      .maybeSingle()
 
       if(error){
         console.log("Error loading profile: ", error.message)
         setProfile(null)
         return
       }
+      
+      if(!data){
+        setProfile(null)
+        setSession(null)
+        await logOut()
+        return
+      }
+
       setProfile(data)
     }
 
-    async function refreshProfile(){
-      const userId = session?.user?.id
+    const refreshProfile = useCallback(async () => {
+      const {data} = await supabase.auth.getSession()
+      const userId = data.session?.user?.id;
 
-      if(!userId){
-        setProfile(null)
-        return
-      }
-      await loadProfile(userId)
-      console.log(profile)
-    }
+      if (!userId) {
+        setProfile(null);
+        return;
+      }                                                                                     
+      await loadProfile(userId);
+    }, [])
+
+   
 
     
 
@@ -113,7 +124,7 @@ export default function AuthProvider({children}: Props){
       session,
       profile,
       refreshProfile
-    }), [loading, session, profile]
+    }), [loading, session, profile, refreshProfile]
     )
 
     return (
