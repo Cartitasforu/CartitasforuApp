@@ -28,7 +28,6 @@ export function AppDateInput({
 }: Props) {
   const [show, setShow] = useState(false);
 
-  // ← normalización defensiva
   const dateValue = value instanceof Date ? value : null;
 
   const formatted = dateValue
@@ -41,7 +40,7 @@ export function AppDateInput({
 
   const handleChange = (_: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === "android") setShow(false);
-    if (selected instanceof Date) onChange(selected); // ← solo Date reales
+    if (selected instanceof Date) onChange(selected);
   };
 
   return (
@@ -69,7 +68,8 @@ export function AppDateInput({
         </AppText>
 
         <AppText variant="bodyM" className="text-[#8C5A6B]">
-          📅
+          {// Icon de un calendario siguiendo los lineamientos de la UI
+          }
         </AppText>
       </Pressable>
 
@@ -77,7 +77,7 @@ export function AppDateInput({
         <DateTimePicker
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
-          value={dateValue ?? new Date()} // ← fallback a hoy si no hay fecha
+          value={dateValue ?? new Date()} 
           maximumDate={maximumDate ?? new Date()}
           minimumDate={minimumDate}
           onChange={handleChange}

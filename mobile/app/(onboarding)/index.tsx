@@ -1,6 +1,6 @@
 import { AppText } from "@/components/ui/app-text";
 import React, { useState } from "react";
-import { View, Alert, Image, TouchableOpacity } from "react-native";
+import { View, Alert, Image, TouchableOpacity, Pressable } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { AppButton } from "@/components/ui/app-button";
 import { useLocalSearchParams } from "expo-router";
@@ -8,30 +8,39 @@ import { completeProfile } from "@/features/auth/api/on-board";
 import { useAuth } from "@/providers/AuthProvider";
 import { AppInput } from "@/components/ui/app-input";
 import { Controller, useForm } from "react-hook-form";
-import { OnBoardidngFormData, onBoardingSchema } from "@/features/auth/schemas/on-boarding.schema";
+import {
+  OnBoardidngFormData,
+  onBoardingSchema,
+} from "@/features/auth/schemas/on-boarding.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AppDateInput } from "@/components/ui/app-date-input";
 import { AppSelect } from "@/components/ui/app-select-input";
 import { InterestsPicker } from "@/components/ui/interests-picker";
 import { uploadToStorage } from "@/features/auth/api/upload-to-storage";
+import { AppCheckbox } from "@/components/ui/app-checkbox";
 
 export default function OnboardingScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null)
-  const {userId} = useLocalSearchParams<{userId: string}>()
-  const {refreshProfile} = useAuth()
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
+  const { userId } = useLocalSearchParams<{ userId: string }>();
+  const { refreshProfile } = useAuth();
 
-  const {control, handleSubmit, formState: {errors, isSubmitting}} = useForm<OnBoardidngFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<OnBoardidngFormData>({
     resolver: zodResolver(onBoardingSchema),
     defaultValues: {
       full_name: "",
       nickname: "",
       birth_date: undefined,
       gender: undefined,
-      interests: []
+      interests: [],
     },
-    mode: "onSubmit"
-  })
+    mode: "onSubmit",
+  });
 
   const pickImage = async () => {
     const permissionResult =
@@ -47,24 +56,24 @@ export default function OnboardingScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.75,
-      base64: true
+      base64: true,
     });
 
     if (!result.canceled) {
       setImageUri(result.assets[0].uri);
-      setImage(result.assets[0])
+      setImage(result.assets[0]);
     }
   };
 
-  const onSubmit = async (values: OnBoardidngFormData, ) => {
+  const onSubmit = async (values: OnBoardidngFormData) => {
     try {
-      const imageUrl = await uploadToStorage(image)
-      await completeProfile(userId, values, imageUrl)
-      await refreshProfile()
+      const imageUrl = await uploadToStorage(image);
+      await completeProfile(userId, values, imageUrl);
+      await refreshProfile();
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   return (
     <View className="flex-1 bg-bgPink px-5 pt-20">
@@ -89,6 +98,7 @@ export default function OnboardingScreen() {
             <AppText className="text-center justify-center align-text-bottom">
               P
             </AppText>
+            <View className="absolute w-12 h-12 bg-white rounded-full left-24 top-24 border-4 border-bgPink"></View>
           </TouchableOpacity>
         )}
       </View>
@@ -131,6 +141,7 @@ export default function OnboardingScreen() {
             name="birth_date"
             render={({ field: { onChange, onBlur, value } }) => (
               <AppDateInput
+                className="w-52"
                 label="Fecha de nacimiento"
                 value={value}
                 onChange={onChange}
@@ -144,6 +155,7 @@ export default function OnboardingScreen() {
             name="gender"
             render={({ field: { onChange, onBlur, value } }) => (
               <AppSelect
+                className="w-52"
                 label="Género"
                 placeholder="Selecciona tu género"
                 options={[
@@ -175,12 +187,24 @@ export default function OnboardingScreen() {
           )}
         />
       </View>
-      <View>
+      <View className="mt-10">
+        <View>
+          <AppCheckbox
+            label="Aceptar terminos y condiciones"
+            checked={acceptTerms}
+            onChange={() => setAcceptTerms(!acceptTerms)}
+          />
+          <Pressable className="ml-9" //onPress={()=>router.push("/terms")}
+          >
+            <AppText className="text-primaryDeep underline underline-offset-2">Leer aqui</AppText>
+          </Pressable>
+        </View>
         <AppButton
           title="Completar perfil"
           loading={isSubmitting}
           onPress={handleSubmit(onSubmit)}
           className="mt-2"
+          disabled={acceptTerms === false}
         />
       </View>
     </View>
