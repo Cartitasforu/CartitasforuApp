@@ -1,5 +1,5 @@
 import { SignUpFormData, signUpSchema } from '@/features/auth/schemas/sign-up.schema';
-import React, { useState } from 'react'
+import React from 'react'
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { signUp } from '@/features/auth/api/sign-up';
@@ -10,7 +10,6 @@ import { AppInput } from '@/components/ui/app-input';
 import { AppButton } from '@/components/ui/app-button';
 
 export default function SignUpScreen () {
-    const [passwordShown, setPasswordShown] = useState(false)
     const {control, handleSubmit, formState: {errors, isSubmitting}} = useForm<SignUpFormData>({
         resolver: zodResolver(signUpSchema),
         defaultValues: {
@@ -38,15 +37,6 @@ export default function SignUpScreen () {
             Alert.alert("Registro fallido", message)
         }
     }
-
-    const tooglePassword = () => {
-      if(!passwordShown){
-        setPasswordShown(true)
-      } else {
-        setPasswordShown(false)
-      }
-    }
-
   return (
     <View className="flex-1 bg-bgPink px-5 pt-10">
       <View className="gap-2 mb-20">
@@ -93,11 +83,8 @@ export default function SignUpScreen () {
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              secureTextEntry={!passwordShown}
+              secureTextEntry
               error={errors.password?.message}
-              showPasswordToggle
-              passwordVisible={passwordShown}
-              onTogglePassword={tooglePassword}
             />
           )}
         />
@@ -112,11 +99,8 @@ export default function SignUpScreen () {
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              secureTextEntry={!passwordShown}
+              secureTextEntry
               error={errors.confirmPassword?.message}
-              showPasswordToggle
-              passwordVisible={passwordShown}
-              onTogglePassword={tooglePassword}
             />
           )}
         />
