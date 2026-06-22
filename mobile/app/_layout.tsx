@@ -8,13 +8,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 function RootNavigationGate() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [pendingEmailLoaded, setPendingEmailLoaded] = useState(false);
-  const {session, profile, loading} = useAuth()
-  const segments = useSegments()
+
+  const { session, profile, loading } = useAuth();
+  const segments = useSegments();
 
   useEffect(() => {
     async function loadPendingEmail() {
       const storedEmail = await AsyncStorage.getItem(
-        "pending_verification_email",
+        "pending_verification_email"
       );
       setPendingEmail(storedEmail);
       setPendingEmailLoaded(true);
@@ -23,16 +24,27 @@ function RootNavigationGate() {
     loadPendingEmail();
   }, []);
 
+  const firstSegment = segments[0];
+  const secondSegment = segments[1];
+
+  const inAuthGroup = firstSegment === "(auth)";
+  const inOnboardingGroup = firstSegment === "(onboarding)";
+  const inAppGroup = firstSegment === "(app)";
+
+  const isVerifyOtpScreen =
+    inAuthGroup && secondSegment === "verify-email";
+
+  // 🔥 RESET PASSWORD DETECTION (CLAVE)
+  const isResetPasswordScreen =
+    inAuthGroup && secondSegment === "reset-password";
+
   useEffect(() => {
-    if(loading || !pendingEmailLoaded) return 
+    if (loading || !pendingEmailLoaded) return;
 
-    const firstSegment = segments[0]
+    // 🔥 1. PERMITIR RESET PASSWORD SIN INTERFERENCIA
+    if (isResetPasswordScreen) return;
 
-    const inAuthGroup = firstSegment === "(auth)"
-    const inOnboardingGroup = firstSegment === "(onboarding)"
-    const inAppGroup = firstSegment === "(app)"
-    const isVerifyOtpScreen = inAuthGroup && segments[1] === "verify-email";
-
+    // 🔥 2. SIN SESSION + EMAIL PENDIENTE
     if (!session && pendingEmail) {
       if (!isVerifyOtpScreen) {
         router.replace({
@@ -43,57 +55,74 @@ function RootNavigationGate() {
       return;
     }
 
-    if(!session) {
-      if(!inAuthGroup) {
-        router.replace("/(auth)/signin")
+    // 🔥 3. SIN SESSION → SIGNIN
+    if (!session) {
+      if (!inAuthGroup) {
+        router.replace("/(auth)/signin");
       }
-      return
+      return;
     }
 
-    if(session && profile && !profile.email_verified_at) {
-      if(!isVerifyOtpScreen) {
+    // 🔥 4. EMAIL NO VERIFICADO
+    if (session && profile && !profile.email_verified_at) {
+      if (!isVerifyOtpScreen) {
         router.replace({
           pathname: "/(auth)/verify-email",
-          params: {email: session.user.email ?? ""}
-        })
+          params: { email: session.user.email ?? "" },
+        });
       }
-      return
+      return;
     }
 
-    if(session && profile?.email_verified_at && !profile?.onboarding_completed) {
-      if(!inOnboardingGroup){
+    // 🔥 5. ONBOARDING
+    if (
+      session &&
+      profile?.email_verified_at &&
+      !profile?.onboarding_completed
+    ) {
+      if (!inOnboardingGroup) {
         router.replace({
           pathname: "/(onboarding)",
-          params: {userId: session.user.id ?? ""}
-        })
+          params: { userId: session.user.id ?? "" },
+        });
       }
+      return;
     }
 
-    if(session && profile?.email_verified_at && profile.onboarding_completed){
-      if(!inAppGroup){
-        router.replace("/(app)/home")
+    // 🔥 6. APP PRINCIPAL
+    if (
+      session &&
+      profile?.email_verified_at &&
+      profile.onboarding_completed
+    ) {
+      if (!inAppGroup) {
+        router.replace("/(app)/home");
       }
     }
-  
-    
-  }, [loading, session, profile, segments, pendingEmail, pendingEmailLoaded])
+  }, [
+    loading,
+    session,
+    profile,
+    segments,
+    pendingEmail,
+    pendingEmailLoaded,
+  ]);
 
   if (loading || !pendingEmailLoaded) {
     return (
       <View className="flex justify-center align-middle">
-        <ActivityIndicator/>
+        <ActivityIndicator />
       </View>
-    )
+    );
   }
 
-  return <Stack screenOptions={{headerShown: false}}/>
-  
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
 
 export default function RootLayout() {
   return (
-  <AuthProvider>
-    <RootNavigationGate/>
-  </AuthProvider>
-  )
+    <AuthProvider>
+      <RootNavigationGate />
+    </AuthProvider>
+  );
 }

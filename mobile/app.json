@@ -8,6 +8,19 @@
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "plugins": ["expo-router"],
+    "linking": {
+      "schemes": ["mobile"],
+      "prefixes": ["mobile://"],
+      "config": {
+        "screens": {
+          "(auth)/reset-password": "reset-password",
+          "(auth)/verify-email": "verify-email",
+          "(auth)/signin": "signin",
+          "(auth)/signup": "signup"
+        }
+      }
+    },
     "ios": {
       "supportsTablet": true
     },

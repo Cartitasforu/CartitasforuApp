@@ -92,7 +92,7 @@ export default function SignUpFormScreen() {
 
         <View className="flex flex-row justify-center">
           <AppText variant="bodyM">Olvidaste tu contraseña? </AppText>
-          <Pressable>
+          <Pressable onPress={() => router.push("/(auth)/forgot-password")}>
             <AppText variant="bodyM" className="text-primaryDeep">
               Restablecer contraseña
             </AppText>
@@ -101,7 +101,7 @@ export default function SignUpFormScreen() {
 
         <View className="flex flex-row justify-center">
           <AppText variant="bodyM">No tienes cuenta? </AppText>
-          <Pressable onPress={() => router.back()}>
+          <Pressable onPress={() => router.push("/(auth)/signup")}>
             <AppText variant="bodyM" className="text-primaryDeep">
               Registrate aquí
             </AppText>

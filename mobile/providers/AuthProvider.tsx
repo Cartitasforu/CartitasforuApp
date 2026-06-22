@@ -1,6 +1,7 @@
 import { logOut } from "@/features/auth/api/log-out";
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js"
+import { router } from "expo-router";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 
@@ -100,9 +101,13 @@ export default function AuthProvider({children}: Props){
 
       bootstrap()
 
-      const {data: authListener} = supabase.auth.onAuthStateChange(async (_, session) => {
+      const {data: authListener} = supabase.auth.onAuthStateChange(async (event, session) => {
         setSession(session ?? null)
 
+          if (event === "PASSWORD_RECOVERY") {
+        router.replace("/(auth)/reset-password/index");
+        return;
+      }
         if(session?.user?.id){
           await loadProfile(session.user.id)
         } else {
