@@ -119,10 +119,6 @@ export default function VerifyEmailScreen() {
     router.replace("/(auth)/signup")
   }
 
-  const handleChangeWrongEmail = async () => {
-    await changeWrongEmail()
-    router.replace("/(auth)/signin")
-  }
 
   return (
     <View className="flex-1 bg-bgPink px-10 pt-10">
