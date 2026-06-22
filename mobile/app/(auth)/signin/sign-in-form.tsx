@@ -11,6 +11,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Pressable, Text, TouchableOpacity, View } from "react-native";
+import {TEXTS} from "./../../../constants/language/es/texts"
 
 export default function SignUpFormScreen() {
   const {
@@ -48,10 +49,10 @@ export default function SignUpFormScreen() {
           variant="display"
           className="text-display text-center pt-40 pb-4"
         >
-          Inicia sesión
+          {TEXTS.auth.login_title}
         </AppText>
         <AppText variant="caption" className="text-roseGray text-center">
-          Tu lugar bonito te espera
+          {TEXTS.auth.login_form_subtitle}
         </AppText>
       </View>
 
@@ -61,8 +62,8 @@ export default function SignUpFormScreen() {
           name="email"
           render={({ field: { onChange, onBlur, value } }) => (
             <AppInput
-              label="Correo"
-              placeholder="Ingresa tu correo"
+              label={TEXTS.auth.email_label}
+              placeholder={TEXTS.auth.email_placeholder}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -79,8 +80,8 @@ export default function SignUpFormScreen() {
           name="password"
           render={({ field: { onChange, onBlur, value } }) => (
             <AppInput
-              label="Contraseña"
-              placeholder="Ingresa tu contraseña"
+              label={TEXTS.auth.password_label}
+              placeholder={TEXTS.auth.password_placeholder}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -91,25 +92,25 @@ export default function SignUpFormScreen() {
         />
 
         <View className="flex flex-row justify-center">
-          <AppText variant="bodyM">Olvidaste tu contraseña? </AppText>
+          <AppText variant="bodyM">{TEXTS.auth.forgot_password_text} </AppText>
           <Pressable>
             <AppText variant="bodyM" className="text-primaryDeep">
-              Restablecer contraseña
+              {TEXTS.auth.forgot_password_link}
             </AppText>
           </Pressable>
         </View>
 
         <View className="flex flex-row justify-center">
-          <AppText variant="bodyM">No tienes cuenta? </AppText>
+          <AppText variant="bodyM">{TEXTS.auth.no_account_text} </AppText>
           <Pressable onPress={() => router.back()}>
             <AppText variant="bodyM" className="text-primaryDeep">
-              Registrate aquí
+              {TEXTS.auth.no_account_call_to_action}
             </AppText>
           </Pressable>
         </View>
 
         <AppButton
-          title="Iniciar sesión"
+          title={TEXTS.auth.complete_login_button}
           loading={isSubmitting}
           onPress={handleSubmit(onSubmit)}
           className="mt-2"

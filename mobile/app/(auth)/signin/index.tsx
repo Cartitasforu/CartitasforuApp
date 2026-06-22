@@ -3,6 +3,7 @@ import { Mail } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useState } from "react";
+import {TEXTS} from "./../../../constants/language/es/texts"
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -14,25 +15,33 @@ export default function LoginScreen() {
       {/* Header */}
       <View className="mt-12 justify-center items-center mb-8">
         <Text className="font-1  text-display text-wineDark">
-          Inicia sesión
+          {TEXTS.auth.login_title}
         </Text>
         <Text className="font-body text-body-m text-roseGray mt-5">
-          Este es su espacio, sean felices y disfruten otra frase
+          {TEXTS.auth.login_subtitle}
         </Text>
       </View>
-      <Pressable
-        className="flex-row items-center justify-center bg-white rounded-pill min-h-button mb-3 px-4"
-        >
-        <FontAwesome6 name="google" size={18} color="#bbb" style={{ marginRight: 12 }} />
+      <Pressable className="flex-row items-center justify-center bg-white rounded-pill min-h-button mb-3 px-4">
+        <FontAwesome6
+          name="google"
+          size={18}
+          color="#bbb"
+          style={{ marginRight: 12 }}
+        />
         <Text className="font-body text-button text-wineDark">
-          {loadingGoogle ? "Conectando..." : "Iniciar sesión con Google"}
+          {loadingGoogle ? "Conectando..." : TEXTS.auth.google_login_button}
         </Text>
       </Pressable>
 
       <Pressable className="flex-row items-center justify-center bg-wineDark rounded-pill min-h-button mb-4 px-4">
-        <FontAwesome6 name="apple" size={20} color="#fff" style={{ marginRight: 12 }} />
+        <FontAwesome6
+          name="apple"
+          size={20}
+          color="#fff"
+          style={{ marginRight: 12 }}
+        />
         <Text className="font-body text-button text-white">
-          Iniciar sesión con Apple
+          {TEXTS.auth.apple_login_button}
         </Text>
       </Pressable>
 
@@ -50,18 +59,18 @@ export default function LoginScreen() {
       >
         <Mail size={20} color="#fff" style={{ marginRight: 12 }} />
         <Text className="font-body text-button text-white">
-          Ingresar con correo y contraseña
+          {TEXTS.auth.email_login_button}
         </Text>
       </Pressable>
 
       {/* Signup link */}
       <View className="flex-row justify-center">
         <Text className="font-body text-body-m text-roseGray">
-          No tienes cuenta?{" "}
+          {TEXTS.auth.no_account_text}{" "}
         </Text>
         <Pressable onPress={() => router.push("/(auth)/signup")}>
           <Text className="font-body text-body-m text-primary font-medium">
-            Regístrate aquí
+            {TEXTS.auth.no_account_call_to_action}
           </Text>
         </Pressable>
       </View>
