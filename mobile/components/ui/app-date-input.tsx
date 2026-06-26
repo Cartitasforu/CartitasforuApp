@@ -6,6 +6,7 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { AppText } from "./app-text";
 import { cn } from "@/lib/cn";
+import {TEXTS} from "./../../constants/language/es/texts"
 
 type Props = {
   label?: string;
@@ -64,7 +65,7 @@ export function AppDateInput({
           variant="bodyM"
           className={cn(formatted ? "text-wineDark" : "text-[#8C5A6B]")}
         >
-          {formatted ?? "DD/MM/AAAA"}
+          {formatted ?? TEXTS.profile_setup.birthdate_placeholder}
         </AppText>
 
         <AppText variant="bodyM" className="text-[#8C5A6B]">

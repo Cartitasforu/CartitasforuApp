@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { AppText } from '@/components/ui/app-text';
 import { AppInput } from '@/components/ui/app-input';
 import { AppButton } from '@/components/ui/app-button';
+import {TEXTS} from "./../../../constants/language/es/texts"
 
 export default function SignUpScreen () {
     const [passwordShown, setPasswordShown] = useState(false)
@@ -57,10 +58,10 @@ export default function SignUpScreen () {
           variant="display"
           className="text-display text-center pt-40 pb-4"
         >
-          Registrate
+          {TEXTS.auth.signup_title}
         </AppText>
         <AppText variant="caption" className="text-roseGray text-center">
-          Empieza a guardar sus momentos bonitos.
+          {TEXTS.auth.signup_subtitle}
         </AppText>
       </View>
 
@@ -70,8 +71,8 @@ export default function SignUpScreen () {
           name="email"
           render={({ field: { onChange, onBlur, value } }) => (
             <AppInput
-              label="Correo"
-              placeholder="Ingresa tu correo"
+              label={TEXTS.auth.email_label}
+              placeholder={TEXTS.auth.email_placeholder}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -88,8 +89,8 @@ export default function SignUpScreen () {
           name="password"
           render={({ field: { onChange, onBlur, value } }) => (
             <AppInput
-              label="Contraseña"
-              placeholder="Ingresa tu contraseña"
+              label={TEXTS.auth.password_label}
+              placeholder={TEXTS.auth.password_placeholder}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -107,8 +108,8 @@ export default function SignUpScreen () {
           name="confirmPassword"
           render={({ field: { onChange, onBlur, value } }) => (
             <AppInput
-              label="Confirmar contraseña"
-              placeholder="Confirma tu contraseña"
+              label={TEXTS.auth.confirm_password_label}
+              placeholder={TEXTS.auth.confirm_password_placeholdedr}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -122,7 +123,7 @@ export default function SignUpScreen () {
         />
 
         <AppButton
-          title="Registrarme"
+          title={TEXTS.auth.complete_signup_button}
           loading={isSubmitting}
           onPress={handleSubmit(onSubmit)}
           className="mt-2"

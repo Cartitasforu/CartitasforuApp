@@ -18,6 +18,7 @@ import { AppSelect } from "@/components/ui/app-select-input";
 import { InterestsPicker } from "@/components/ui/interests-picker";
 import { uploadToStorage } from "@/features/auth/api/upload-to-storage";
 import { AppCheckbox } from "@/components/ui/app-checkbox";
+import {TEXTS} from "./../../constants/language/es/texts"
 
 export default function OnboardingScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -78,9 +79,11 @@ export default function OnboardingScreen() {
   return (
     <View className="flex-1 bg-bgPink px-5 pt-20">
       <View className="items-center gap-y-3">
-        <AppText className="text-wineDark text-h1">Completa tu perfil</AppText>
+        <AppText className="text-wineDark text-h1">
+          {TEXTS.profile_setup.title}
+        </AppText>
         <AppText variant="caption" className="">
-          Cuentanos un poco sobre ti
+          {TEXTS.profile_setup.subtitle}
         </AppText>
         {imageUri ? (
           <TouchableOpacity className="border-roseGray" onPress={pickImage}>
@@ -108,8 +111,8 @@ export default function OnboardingScreen() {
           name="full_name"
           render={({ field: { onChange, onBlur, value } }) => (
             <AppInput
-              label="Nombre completo"
-              placeholder="Ingresa tu nombre completo"
+              label={TEXTS.profile_setup.full_name_label}
+              placeholder={TEXTS.profile_setup.full_name_placeholder}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -124,8 +127,8 @@ export default function OnboardingScreen() {
           name="nickname"
           render={({ field: { onChange, onBlur, value } }) => (
             <AppInput
-              label="Apodo (opcional)"
-              placeholder="Ingresa el apodo por el que te llama tu pareja"
+              label={TEXTS.profile_setup.nickname_label}
+              placeholder={TEXTS.profile_setup.nickname_placeholder}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -142,7 +145,7 @@ export default function OnboardingScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <AppDateInput
                 className="w-52"
-                label="Fecha de nacimiento"
+                label={TEXTS.profile_setup.birthdate_label}
                 value={value}
                 onChange={onChange}
                 maximumDate={new Date()}
@@ -156,13 +159,25 @@ export default function OnboardingScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <AppSelect
                 className="w-52"
-                label="Género"
-                placeholder="Selecciona tu género"
+                label={TEXTS.profile_setup.gender_label}
+                placeholder={TEXTS.profile_setup.gender_placeholder}
                 options={[
-                  { label: "Hombre", value: "male" },
-                  { label: "Mujer", value: "female" },
-                  { label: "No binario", value: "non_binary" },
-                  { label: "Prefiero no decirlo", value: "prefer_not_to_say" },
+                  {
+                    label: TEXTS.profile_setup.gender_options.male,
+                    value: "male",
+                  },
+                  {
+                    label: TEXTS.profile_setup.gender_options.female,
+                    value: "female",
+                  },
+                  {
+                    label: TEXTS.profile_setup.gender_options.non_binary,
+                    value: "non_binary",
+                  },
+                  {
+                    label: TEXTS.profile_setup.gender_options.prefer_not_to_say,
+                    value: "prefer_not_to_say",
+                  },
                 ]}
                 value={value}
                 onChange={onChange}
@@ -176,12 +191,14 @@ export default function OnboardingScreen() {
           name="interests"
           render={({ field: { onChange, onBlur, value } }) => (
             <InterestsPicker
-              label="Tus intereses"
+              label={TEXTS.profile_setup.interests_label}
               value={value}
               onChange={onChange}
               max={10}
               error={
-                value.length < 3 ? "Agrega al menos tres intereses" : undefined
+                value.length < 3
+                  ? TEXTS.profile_setup.interests_min_hint
+                  : undefined
               }
             />
           )}
@@ -190,17 +207,20 @@ export default function OnboardingScreen() {
       <View className="mt-10">
         <View>
           <AppCheckbox
-            label="Aceptar terminos y condiciones"
+            label={TEXTS.profile_setup.terms_checkbox}
             checked={acceptTerms}
             onChange={() => setAcceptTerms(!acceptTerms)}
           />
-          <Pressable className="ml-9" //onPress={()=>router.push("/terms")}
+          <Pressable
+            className="ml-9" //onPress={()=>router.push("/terms")}
           >
-            <AppText className="text-primaryDeep underline underline-offset-2">Leer aqui</AppText>
+            <AppText className="text-primaryDeep underline underline-offset-2">
+              {TEXTS.profile_setup.terms_link}
+            </AppText>
           </Pressable>
         </View>
         <AppButton
-          title="Completar perfil"
+          title={TEXTS.profile_setup.complete_button}
           loading={isSubmitting}
           onPress={handleSubmit(onSubmit)}
           className="mt-2"

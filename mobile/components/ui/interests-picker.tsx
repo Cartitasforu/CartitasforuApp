@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { AppText } from "./app-text";
 import { cn } from "@/lib/cn";
+import { TEXTS } from "@/constants/language/es/texts";
 
 const INTERESTS_OPTIONS = [
   "Música",
@@ -89,7 +90,7 @@ export function InterestsPicker({
             className="rounded-full border border-dashed border-roseBorder px-4 py-2"
           >
             <AppText variant="bodyM" className="text-[#8C5A6B]">
-              + Agregar
+              {TEXTS.profile_setup.interests_add_button}
             </AppText>
           </TouchableOpacity>
         )}
