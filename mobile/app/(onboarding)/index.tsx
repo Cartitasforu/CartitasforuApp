@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { View, Alert, Image, TouchableOpacity, Pressable } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { AppButton } from "@/components/ui/app-button";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { completeProfile } from "@/features/auth/api/on-board";
 import { useAuth } from "@/providers/AuthProvider";
 import { AppInput } from "@/components/ui/app-input";
@@ -17,7 +17,10 @@ import { AppDateInput } from "@/components/ui/app-date-input";
 import { AppSelect } from "@/components/ui/app-select-input";
 import { InterestsPicker } from "@/components/ui/interests-picker";
 import { uploadToStorage } from "@/features/auth/api/upload-to-storage";
+import { recordUserConsent } from '@/features/auth/api/consent';
 import { AppCheckbox } from "@/components/ui/app-checkbox";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect } from 'react';
 
 export default function OnboardingScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -25,6 +28,21 @@ export default function OnboardingScreen() {
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { refreshProfile } = useAuth();
+
+  useEffect(() => {
+    // Si venimos de la pantalla de Términos, marcamos el checkbox automáticamente
+    (async () => {
+      try {
+        const didRead = await AsyncStorage.getItem('didReadTerms');
+        if (didRead === 'true') {
+          setAcceptTerms(true);
+          await AsyncStorage.removeItem('didReadTerms');
+        }
+      } catch (e) {
+        console.log('Error reading didReadTerms', e);
+      }
+    })();
+  }, []);
 
   const {
     control,
@@ -69,7 +87,14 @@ export default function OnboardingScreen() {
     try {
       const imageUrl = await uploadToStorage(image);
       await completeProfile(userId, values, imageUrl);
+      // Si el usuario ya aceptó los términos desde el checkbox, registramos el consentimiento
+      if (acceptTerms && userId) {
+        await recordUserConsent(userId as string);
+      }
+
       await refreshProfile();
+      // Navegar a la pantalla principal
+      router.replace('/(app)/home');
     } catch (error) {
       console.log(error);
     }
@@ -194,8 +219,7 @@ export default function OnboardingScreen() {
             checked={acceptTerms}
             onChange={() => setAcceptTerms(!acceptTerms)}
           />
-          <Pressable className="ml-9" //onPress={()=>router.push("/terms")}
-          >
+          <Pressable className="ml-9" onPress={() => router.push('/(onboarding)/user_consent/terms')}>
             <AppText className="text-primaryDeep underline underline-offset-2">Leer aqui</AppText>
           </Pressable>
         </View>
