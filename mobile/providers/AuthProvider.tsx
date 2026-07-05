@@ -101,6 +101,7 @@ export default function AuthProvider({children}: Props){
       bootstrap()
 
       const {data: authListener} = supabase.auth.onAuthStateChange(async (_, session) => {
+        setLoading(true)
         setSession(session ?? null)
 
         if(session?.user?.id){

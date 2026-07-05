@@ -1,8 +1,8 @@
 import AuthProvider, { useAuth } from "@/providers/AuthProvider";
 import "../global.css";
-import { router, Stack, useSegments } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { router, Stack, useRootNavigationState, useSegments } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SpaceProvider, useSpace } from "@/providers/SpaceProvider";
 import { spaceHasTwoMembers } from "@/features/spaces/api/spaceHasTwoMembers";
@@ -14,9 +14,9 @@ function RootNavigationGate() {
   const [hasTwoMembersLoading, setHasTwoMembersLoading] = useState(false);
   const { session, profile, loading } = useAuth();
   const { space, loading: spaceLoading, syncVersion, initialized: spaceInitialized } = useSpace();
-
-
+  const rootNavigationState = useRootNavigationState();
   const segments = useSegments();
+  const isNavigationReady = Boolean(rootNavigationState?.key);
 
   useEffect(() => {
     async function loadPendingEmail() {
@@ -72,8 +72,97 @@ function RootNavigationGate() {
     };
   }, [session, profile?.email_verified_at, profile?.onboarding_completed, space?.id, syncVersion]);
 
+  const needsSpaceResolution =
+    !!session &&
+    !!profile?.email_verified_at &&
+    !!profile?.onboarding_completed;
+
+  const isResolvingSpace =
+    needsSpaceResolution && (!spaceInitialized || spaceLoading);
+
+  const isResolvingMembers =
+    needsSpaceResolution &&
+    !!space?.id &&
+    (hasTwoMembersLoading || hasTwoMembers === null);
+
+  const isRedirectPending = useMemo(() => {
+    if (!isNavigationReady || loading || !pendingEmailLoaded) {
+      return false;
+    }
+
+    if (needsSpaceResolution && (!spaceInitialized || spaceLoading)) {
+      return false;
+    }
+
+    if (
+      needsSpaceResolution &&
+      space &&
+      (hasTwoMembersLoading || hasTwoMembers === null)
+    ) {
+      return false;
+    }
+
+    const firstSegment = segments[0];
+    const inAuthGroup = firstSegment === "(auth)";
+    const inOnboardingGroup = firstSegment === "(onboarding)";
+    const inAppGroup = firstSegment === "(app)";
+    const isVerifyOtpScreen = inAuthGroup && segments[1] === "verify-email";
+    const inSpacesGroup = firstSegment === "(app)" && segments[1] === "spaces";
+
+    if (!session && pendingEmail && !isVerifyOtpScreen) {
+      return true;
+    }
+
+    if (!session && !inAuthGroup) {
+      return true;
+    }
+
+    if (session && profile && !profile.email_verified_at && !isVerifyOtpScreen) {
+      return true;
+    }
+
+    if (
+      session &&
+      profile?.email_verified_at &&
+      !profile?.onboarding_completed &&
+      !inOnboardingGroup
+    ) {
+      return true;
+    }
+
+    if (!spaceLoading && !hasTwoMembersLoading && hasTwoMembers && (!inAppGroup || inSpacesGroup)) {
+      return true;
+    }
+
+    if (session && profile?.email_verified_at && profile.onboarding_completed) {
+      if (!spaceLoading && space === null && !inSpacesGroup) {
+        return true;
+      }
+
+      if (!spaceLoading && space && hasTwoMembers === false && !inSpacesGroup) {
+        return true;
+      }
+    }
+
+    return false;
+  }, [
+    isNavigationReady,
+    loading,
+    pendingEmailLoaded,
+    needsSpaceResolution,
+    spaceInitialized,
+    spaceLoading,
+    space,
+    hasTwoMembersLoading,
+    hasTwoMembers,
+    session,
+    profile,
+    segments,
+    pendingEmail,
+  ]);
+
   useEffect(() => {
-    if (loading || !pendingEmailLoaded) return;
+    if (!isNavigationReady || loading || !pendingEmailLoaded) return;
 
     const needsSpaceResolution =
       !!session &&
@@ -139,6 +228,7 @@ function RootNavigationGate() {
           params: { userId: session.user.id ?? "" },
         });
       }
+      return;
     }
     if (!spaceLoading && !hasTwoMembersLoading && hasTwoMembers) {
       if (!inAppGroup || inSpacesGroup) {
@@ -163,6 +253,7 @@ function RootNavigationGate() {
     }
 
   }, [
+    isNavigationReady,
     loading,
     spaceLoading,
     space,
@@ -176,28 +267,26 @@ function RootNavigationGate() {
     spaceInitialized,
   ]);
 
-  const needsSpaceResolution =
-    !!session &&
-    !!profile?.email_verified_at &&
-    !!profile?.onboarding_completed;
+  const showLoadingOverlay =
+    loading ||
+    !pendingEmailLoaded ||
+    isResolvingSpace ||
+    isResolvingMembers ||
+    isRedirectPending;
 
-  const isResolvingSpace =
-    needsSpaceResolution && (!spaceInitialized || spaceLoading);
-
-  const isResolvingMembers =
-    needsSpaceResolution &&
-    !!space?.id &&
-    (hasTwoMembersLoading || hasTwoMembers === null);
-
-  if (loading || !pendingEmailLoaded || isResolvingSpace || isResolvingMembers) {
-    return (
-      <View className="flex justify-center align-middle">
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <>
+      <Stack screenOptions={{ headerShown: false }} />
+      {showLoadingOverlay ? (
+        <View
+          style={StyleSheet.absoluteFill}
+          className="items-center justify-center bg-bgPink"
+        >
+          <ActivityIndicator />
+        </View>
+      ) : null}
+    </>
+  );
 }
 
 export default function RootLayout() {
