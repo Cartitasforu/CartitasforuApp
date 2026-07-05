@@ -8,7 +8,7 @@ export default function HomeScreen () {
     await logOut()
   }
   return (
-    <View>
+    <View className='mt-20 ml-10'>
       <Text>home</Text>
       <Pressable onPress={onLogOut}>
         <Text>Cerrar sesión</Text>

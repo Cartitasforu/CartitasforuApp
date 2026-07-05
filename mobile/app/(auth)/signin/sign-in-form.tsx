@@ -30,7 +30,7 @@ export default function SignUpFormScreen() {
     try {
       await signInWithEmailAndPassword(values);
 
-      router.replace("/home");
+      //router.replace("/home");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Ocurrio un error inesperado";
