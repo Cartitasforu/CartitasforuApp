@@ -4,12 +4,19 @@ import { router, Stack, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SpaceProvider, useSpace } from "@/providers/SpaceProvider";
+import { spaceHasTwoMembers } from "@/features/spaces/api/spaceHasTwoMembers";
 
 function RootNavigationGate() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [pendingEmailLoaded, setPendingEmailLoaded] = useState(false);
-  const {session, profile, loading} = useAuth()
-  const segments = useSegments()
+  const [hasTwoMembers, setHasTwoMembers] = useState<boolean | null>(null);
+  const [hasTwoMembersLoading, setHasTwoMembersLoading] = useState(false);
+  const { session, profile, loading } = useAuth();
+  const { space, loading: spaceLoading, syncVersion, initialized: spaceInitialized } = useSpace();
+
+
+  const segments = useSegments();
 
   useEffect(() => {
     async function loadPendingEmail() {
@@ -24,14 +31,75 @@ function RootNavigationGate() {
   }, []);
 
   useEffect(() => {
-    if(loading || !pendingEmailLoaded) return 
+    let mounted = true;
 
-    const firstSegment = segments[0]
+    async function loadSpaceMembers() {
+      if (!session || !profile?.email_verified_at || !profile.onboarding_completed) {
+        setHasTwoMembers(null);
+        setHasTwoMembersLoading(false);
+        return;
+      }
 
-    const inAuthGroup = firstSegment === "(auth)"
-    const inOnboardingGroup = firstSegment === "(onboarding)"
-    const inAppGroup = firstSegment === "(app)"
+      if (!space?.id) {
+        setHasTwoMembers(null);
+        setHasTwoMembersLoading(false);
+        return;
+      }
+
+      setHasTwoMembersLoading(true);
+
+      try {
+        const result = await spaceHasTwoMembers(space.id);
+
+        if (mounted) {
+          setHasTwoMembers(result);
+        }
+      } catch {
+        if (mounted) {
+          setHasTwoMembers(false);
+        }
+      } finally {
+        if (mounted) {
+          setHasTwoMembersLoading(false);
+        }
+      }
+    }
+
+    loadSpaceMembers();
+
+    return () => {
+      mounted = false;
+    };
+  }, [session, profile?.email_verified_at, profile?.onboarding_completed, space?.id, syncVersion]);
+
+  useEffect(() => {
+    if (loading || !pendingEmailLoaded) return;
+
+    const needsSpaceResolution =
+      !!session &&
+      !!profile?.email_verified_at &&
+      !!profile?.onboarding_completed;
+
+    if (needsSpaceResolution && (!spaceInitialized || spaceLoading)) {
+      return;
+    }
+
+    if (
+      needsSpaceResolution &&
+      space &&
+      (hasTwoMembersLoading || hasTwoMembers === null)
+    ) {
+      return;
+    }
+
+
+    const firstSegment = segments[0];
+
+    const inAuthGroup = firstSegment === "(auth)";
+    const inOnboardingGroup = firstSegment === "(onboarding)";
+    const inAppGroup = firstSegment === "(app)";
     const isVerifyOtpScreen = inAuthGroup && segments[1] === "verify-email";
+    const inSpacesGroup = firstSegment === "(app)" && segments[1] === "spaces";
 
     if (!session && pendingEmail) {
       if (!isVerifyOtpScreen) {
@@ -43,57 +111,101 @@ function RootNavigationGate() {
       return;
     }
 
-    if(!session) {
-      if(!inAuthGroup) {
-        router.replace("/(auth)/signin")
+    if (!session) {
+      if (!inAuthGroup) {
+        router.replace("/(auth)/signin");
       }
-      return
+      return;
     }
 
-    if(session && profile && !profile.email_verified_at) {
-      if(!isVerifyOtpScreen) {
+    if (session && profile && !profile.email_verified_at) {
+      if (!isVerifyOtpScreen) {
         router.replace({
           pathname: "/(auth)/verify-email",
-          params: {email: session.user.email ?? ""}
-        })
+          params: { email: session.user.email ?? "" },
+        });
       }
-      return
+      return;
     }
 
-    if(session && profile?.email_verified_at && !profile?.onboarding_completed) {
-      if(!inOnboardingGroup){
+    if (
+      session &&
+      profile?.email_verified_at &&
+      !profile?.onboarding_completed
+    ) {
+      if (!inOnboardingGroup) {
         router.replace({
           pathname: "/(onboarding)",
-          params: {userId: session.user.id ?? ""}
-        })
+          params: { userId: session.user.id ?? "" },
+        });
+      }
+    }
+    if (!spaceLoading && !hasTwoMembersLoading && hasTwoMembers) {
+      if (!inAppGroup || inSpacesGroup) {
+        router.replace("/(app)/home");
       }
     }
 
-    if(session && profile?.email_verified_at && profile.onboarding_completed){
-      if(!inAppGroup){
-        router.replace("/(app)/home")
+    if (session && profile?.email_verified_at && profile.onboarding_completed) {
+      if (!spaceLoading && space === null) {
+        if (!inSpacesGroup) {
+          router.replace("/(app)/spaces");
+        }
+        return;
+      }
+
+      if (!spaceLoading && space && hasTwoMembers === false) {
+        if (!inSpacesGroup) {
+          router.replace("/(app)/spaces");
+        }
+        return;
       }
     }
-  
-    
-  }, [loading, session, profile, segments, pendingEmail, pendingEmailLoaded])
 
-  if (loading || !pendingEmailLoaded) {
+  }, [
+    loading,
+    spaceLoading,
+    space,
+    session,
+    profile,
+    segments,
+    pendingEmail,
+    pendingEmailLoaded,
+    hasTwoMembers,
+    hasTwoMembersLoading,
+    spaceInitialized,
+  ]);
+
+  const needsSpaceResolution =
+    !!session &&
+    !!profile?.email_verified_at &&
+    !!profile?.onboarding_completed;
+
+  const isResolvingSpace =
+    needsSpaceResolution && (!spaceInitialized || spaceLoading);
+
+  const isResolvingMembers =
+    needsSpaceResolution &&
+    !!space?.id &&
+    (hasTwoMembersLoading || hasTwoMembers === null);
+
+  if (loading || !pendingEmailLoaded || isResolvingSpace || isResolvingMembers) {
     return (
       <View className="flex justify-center align-middle">
-        <ActivityIndicator/>
+        <ActivityIndicator />
       </View>
-    )
+    );
   }
 
-  return <Stack screenOptions={{headerShown: false}}/>
-  
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
 
 export default function RootLayout() {
   return (
-  <AuthProvider>
-    <RootNavigationGate/>
-  </AuthProvider>
-  )
+    <AuthProvider>
+      <SpaceProvider>
+        <RootNavigationGate />
+      </SpaceProvider>
+    </AuthProvider>
+  );
 }
