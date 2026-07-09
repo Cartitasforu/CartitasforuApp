@@ -1,9 +1,9 @@
 import { supabase } from "@/lib/supabase";
-import { OnBoardidngFormData } from "../schemas/on-boarding.schema";
+import { OnBoardingFormData } from "../schemas/on-boarding.schema";
 
 export async function completeProfile(
     userId: string,
-    data: OnBoardidngFormData,
+    data: OnBoardingFormData,
     filePath: string | null,
 ) {
         const {full_name, birth_date, nickname, gender, interests} = data
@@ -22,7 +22,7 @@ export async function completeProfile(
                 .from('profile-images')
                 .getPublicUrl(filePath);
 
-            profileUpdates.profile_photo_url = urlData;
+            profileUpdates.profile_photo_url = urlData.publicUrl;
         }
 
     const {error} = await supabase

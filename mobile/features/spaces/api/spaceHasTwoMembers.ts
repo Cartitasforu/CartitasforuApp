@@ -7,7 +7,7 @@ export async function spaceHasTwoMembers(spaceId: string | undefined) {
 
     const { count, error } = await supabase
         .from("space_member")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("space_id", spaceId.trim());
 
     if (error) {

@@ -3,9 +3,10 @@ import { AppText } from "@/components/ui/app-text";
 import { deleteOwnAccount } from "@/features/auth/api/delete-own-account";
 import { resendOtpCode } from "@/features/auth/api/resend-otp";
 import otpVerify from "@/features/auth/api/verify-email";
+import { useCodeInput } from "@/hooks/useCodeInput";
 import { useAuth } from "@/providers/AuthProvider";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -18,14 +19,14 @@ import {TEXTS} from "./../../../constants/language/es/texts"
 
 export default function VerifyEmailScreen() {
   const length = 6;
-  const [code, setCode] = useState<string[]>(new Array(length).fill(""));
   const { email } = useLocalSearchParams<{ email: string }>();
 
   const { refreshProfile } = useAuth();
 
-  const inputRef = useRef<(TextInput | null)[]>([]);
 
   const [seconds, setSeconds] = useState(60);
+
+  const {code, inputRef, handleChange} = useCodeInput(length, )
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -45,49 +46,6 @@ export default function VerifyEmailScreen() {
     }${lastSeconds}`;
   };
 
-  const handleChange = (text: string, index: number) => {
-    const cleanCode = text.replace(/[^0-9]/g, "");
-
-    if (cleanCode === "") {
-      setCode((currentCode) => {
-        const nextCode = [...currentCode];
-        const hadValue = nextCode[index] !== "";
-        nextCode[index] = "";
-
-        if (hadValue && index > 0) {
-          setTimeout(() => {
-            inputRef.current[index - 1]?.focus();
-          }, 10);
-        }
-
-        return nextCode;
-      });
-      return;
-    }
-
-    setCode((currentCode) => {
-      const nextCode = [...currentCode];
-      const digits = cleanCode.slice(0, length - index).split("");
-
-      digits.forEach((digit, offset) => {
-        nextCode[index + offset] = digit;
-      });
-
-      const nextFocusIndex = Math.min(index + digits.length, length - 1);
-
-      if (index + digits.length < length) {
-        setTimeout(() => {
-          inputRef.current[index + digits.length]?.focus();
-        }, 10);
-      } else {
-        setTimeout(() => {
-          inputRef.current[nextFocusIndex]?.blur();
-        }, 10);
-      }
-
-      return nextCode;
-    });
-  };
 
   const handleVerify = async () => {
     const codeDigits = code.join("");

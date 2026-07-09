@@ -1,8 +1,10 @@
 import { AppButton } from "@/components/ui/app-button";
 import { AppText } from "@/components/ui/app-text";
 import { joinSpaceByCode } from "@/features/spaces/api/join-space";
+import { useCodeInput } from "@/hooks/useCodeInput";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 import { useSpace } from "@/providers/SpaceProvider";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { TextInput, View } from "react-native";
 
 const CODE_LENGTH = 4;
@@ -10,55 +12,9 @@ const CODE_LENGTH = 4;
 export default function SpaceScreen() {
   const { initializeSpace, refreshSpace, space } = useSpace();
   const [invitationCode, setInvitationCode] = useState<string | null>(null);
-  const [inputInvitationCode, setInputInvitationCode] = useState<string[]>(
-    new Array(CODE_LENGTH).fill(""),
-  );
-
-  const inputRef = useRef<(TextInput | null)[]>([]);
-
-  const handleChange = (text: string, index: number) => {
-    const cleanCode = text.trim();
-
-    if (cleanCode === "") {
-      setInputInvitationCode((currentCode) => {
-        const nextCode = [...currentCode];
-        const hadValue = nextCode[index] !== "";
-        nextCode[index] = "";
-
-        if (hadValue && index > 0) {
-          setTimeout(() => {
-            inputRef.current[index - 1]?.focus();
-          }, 10);
-        }
-
-        return nextCode;
-      });
-      return;
-    }
-
-    setInputInvitationCode((currentCode) => {
-      const nextCode = [...currentCode];
-      const digits = cleanCode.slice(0, CODE_LENGTH - index).split("");
-
-      digits.forEach((digit, offset) => {
-        nextCode[index + offset] = digit;
-      });
-
-      const nextFocusIndex = Math.min(index + digits.length, CODE_LENGTH - 1);
-
-      if (index + digits.length < CODE_LENGTH) {
-        setTimeout(() => {
-          inputRef.current[index + digits.length]?.focus();
-        }, 10);
-      } else {
-        setTimeout(() => {
-          inputRef.current[nextFocusIndex]?.blur();
-        }, 10);
-      }
-
-      return nextCode;
-    });
-  };
+  const { code: inputInvitationCode, inputRef, handleChange } = 
+    useCodeInput(CODE_LENGTH, (text) => text.trim());
+  const { handleError } = useErrorHandler();
 
   const handleJoinSpace = async () => {
     const code = inputInvitationCode.join("").trim();
@@ -67,8 +23,12 @@ export default function SpaceScreen() {
       return;
     }
 
-    await joinSpaceByCode(code);
-    await refreshSpace();
+    try {
+      await joinSpaceByCode(code);
+      await refreshSpace();
+    } catch (error) {
+      handleError(error);
+    }
   };
 
   useEffect(() => {
@@ -160,5 +120,3 @@ export default function SpaceScreen() {
     </View>
   );
 }
-
-//E0EA

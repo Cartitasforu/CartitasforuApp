@@ -1,7 +1,7 @@
 import { logOut } from "@/features/auth/api/log-out";
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js"
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 
 type UserProfile = {
@@ -33,7 +33,7 @@ export default function AuthProvider({children}: Props){
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null)
 
-    async function loadProfile(userId: string){
+    const loadProfile = useCallback(async (userId: string) => {
       const {data, error} = await supabase
       .from("user")
       .select("id, email_verified_at, onboarding_completed")
@@ -54,7 +54,7 @@ export default function AuthProvider({children}: Props){
       }
 
       setProfile(data)
-    }
+    }, [])
 
     const refreshProfile = useCallback(async () => {
       const {data} = await supabase.auth.getSession()
@@ -135,4 +135,8 @@ export default function AuthProvider({children}: Props){
     )
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) throw new Error("useAuth must be used within AuthProvider")
+  return context
+}

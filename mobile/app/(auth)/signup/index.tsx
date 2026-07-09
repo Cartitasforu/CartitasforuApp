@@ -1,5 +1,5 @@
 import { SignUpFormData, signUpSchema } from '@/features/auth/schemas/sign-up.schema';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { signUp } from '@/features/auth/api/sign-up';
@@ -40,13 +40,7 @@ export default function SignUpScreen () {
         }
     }
 
-    const tooglePassword = () => {
-      if(!passwordShown){
-        setPasswordShown(true)
-      } else {
-        setPasswordShown(false)
-      }
-    }
+    const togglePassword = () => setPasswordShown(prev => !prev)
 
   return (
     <View className="flex-1 bg-bgPink px-5 pt-10">
@@ -98,7 +92,7 @@ export default function SignUpScreen () {
               error={errors.password?.message}
               showPasswordToggle
               passwordVisible={passwordShown}
-              onTogglePassword={tooglePassword}
+              onTogglePassword={togglePassword}
             />
           )}
         />
@@ -117,7 +111,7 @@ export default function SignUpScreen () {
               error={errors.confirmPassword?.message}
               showPasswordToggle
               passwordVisible={passwordShown}
-              onTogglePassword={tooglePassword}
+              onTogglePassword={togglePassword}
             />
           )}
         />

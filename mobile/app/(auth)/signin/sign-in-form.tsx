@@ -8,12 +8,11 @@ import {
 } from "@/features/auth/schemas/sign-in.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Pressable, Text, TouchableOpacity, View } from "react-native";
 import {TEXTS} from "./../../../constants/language/es/texts"
 
-export default function SignUpFormScreen() {
+export default function SignInFormScreen() {
   const {
     control,
     handleSubmit,

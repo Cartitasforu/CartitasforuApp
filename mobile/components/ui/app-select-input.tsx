@@ -1,9 +1,9 @@
 // components/app-select.tsx
 import { useState } from "react";
 import {
-  FlatList,
   Modal,
   Pressable,
+  ScrollView,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -91,42 +91,45 @@ export function AppSelect<T extends string = string>({
                 <View className="w-10 h-1 rounded-full bg-roseBorder" />
               </View>
 
-              <FlatList
-                data={options}
-                keyExtractor={(item) => item.value}
-                ItemSeparatorComponent={() => (
-                  <View className="h-px bg-roseBorder/30 mx-4" />
-                )}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onPress={() => {
-                      onChange(item.value);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      "px-6 py-4 flex-row items-center justify-between",
-                      item.value === value ? "bg-rose-50" : "",
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerClassName="py-2"
+              >
+                {options.map((item, index) => (
+                  <View key={item.value}>
+                    {index > 0 && (
+                      <View className="h-px bg-roseBorder/30 mx-4" />
                     )}
-                  >
-                    <AppText
-                      variant="bodyM"
+                    <TouchableOpacity
+                      onPress={() => {
+                        onChange(item.value);
+                        setOpen(false);
+                      }}
                       className={cn(
-                        item.value === value
-                          ? "text-wineDark font-semibold"
-                          : "text-wineDark",
+                        "px-6 py-4 flex-row items-center justify-between",
+                        item.value === value ? "bg-rose-50" : "",
                       )}
                     >
-                      {item.label}
-                    </AppText>
-
-                    {item.value === value ? (
-                      <AppText variant="bodyM" className="text-wineDark">
-                        ✓
+                      <AppText
+                        variant="bodyM"
+                        className={cn(
+                          item.value === value
+                            ? "text-wineDark font-semibold"
+                            : "text-wineDark",
+                        )}
+                      >
+                        {item.label}
                       </AppText>
-                    ) : null}
-                  </TouchableOpacity>
-                )}
-              />
+
+                      {item.value === value ? (
+                        <AppText variant="bodyM" className="text-wineDark">
+                          ✓
+                        </AppText>
+                      ) : null}
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
             </View>
           </Pressable>
         </Pressable>

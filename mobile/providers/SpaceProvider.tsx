@@ -1,9 +1,10 @@
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -40,6 +41,8 @@ const SpaceContext = createContext<SpaceContextValue | null>(null);
 
 export function SpaceProvider({ children }: { children: React.ReactNode }) {
   const { session, profile } = useAuth();
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
   
   const [space, setSpace] = useState<Space | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +57,8 @@ export function SpaceProvider({ children }: { children: React.ReactNode }) {
   }, []);
   
   const refreshSpace = useCallback(async (): Promise<Space | null> => {
-    if (!session) {
+    const currentSession = sessionRef.current;
+    if (!currentSession) {
       setSpace(null);
       setLoading(false);
       setInitialized(true);
@@ -64,7 +68,7 @@ export function SpaceProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     
     try {
-      const result = await getMySpace(session.user.id);
+      const result = await getMySpace(currentSession.user.id);
       
       if (!result?.space) {
         setSpace(null);
@@ -89,7 +93,7 @@ export function SpaceProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       setInitialized(true);
     }
-  }, [session]);
+  }, []);
   
   const initializeSpace = useCallback(async (): Promise<CreateSpaceResult> => {
     const result = await createSpaceWithInvite();
@@ -147,7 +151,7 @@ export function SpaceProvider({ children }: { children: React.ReactNode }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session, space?.id, refreshSpace]);
+  }, [session?.user?.id, space?.id, refreshSpace]);
 
   const value = useMemo<SpaceContextValue>(
     () => ({

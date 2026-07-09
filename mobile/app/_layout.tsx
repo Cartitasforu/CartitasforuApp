@@ -4,8 +4,65 @@ import { router, Stack, useRootNavigationState, useSegments } from "expo-router"
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SpaceProvider, useSpace } from "@/providers/SpaceProvider";
+import { SpaceProvider, useSpace, Space } from "@/providers/SpaceProvider";
 import { spaceHasTwoMembers } from "@/features/spaces/api/spaceHasTwoMembers";
+import { Session } from "@supabase/supabase-js";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+
+type UserProfile = {
+  id: string;
+  email_verified_at: string | null;
+  onboarding_completed: boolean | null;
+};
+
+function getTargetRoute(params: {
+  session: Session | null;
+  profile: UserProfile | null;
+  space: Space | null;
+  hasTwoMembers: boolean | null;
+  pendingEmail: string | null;
+  currentSegments: string[];
+}): { route: string; params?: Record<string, string> } | null {
+  const { session, profile, space, hasTwoMembers, pendingEmail, currentSegments } = params;
+
+  const firstSegment = currentSegments[0];
+  const inAuthGroup = firstSegment === "(auth)";
+  const inOnboardingGroup = firstSegment === "(onboarding)";
+  const inAppGroup = firstSegment === "(app)";
+  const isVerifyOtpScreen = inAuthGroup && currentSegments[1] === "verify-email";
+  const inSpacesGroup = firstSegment === "(app)" && currentSegments[1] === "spaces";
+
+  if (!session && pendingEmail && !isVerifyOtpScreen) {
+    return { route: "/(auth)/verify-email", params: { email: pendingEmail } };
+  }
+
+  if (!session && !inAuthGroup) {
+    return { route: "/(auth)/signin" };
+  }
+
+  if (session && profile && !profile.email_verified_at && !isVerifyOtpScreen) {
+    return { route: "/(auth)/verify-email", params: { email: session.user.email ?? "" } };
+  }
+
+  if (session && profile?.email_verified_at && !profile?.onboarding_completed && !inOnboardingGroup) {
+    return { route: "/(onboarding)", params: { userId: session.user.id ?? "" } };
+  }
+
+  if (hasTwoMembers && (!inAppGroup || inSpacesGroup)) {
+    return { route: "/(app)/home" };
+  }
+
+  if (session && profile?.email_verified_at && profile.onboarding_completed) {
+    if (space === null && !inSpacesGroup) {
+      return { route: "/(app)/spaces" };
+    }
+    if (space && hasTwoMembers === false && !inSpacesGroup) {
+      return { route: "/(app)/spaces" };
+    }
+  }
+
+  return null;
+}
 
 function RootNavigationGate() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
@@ -20,11 +77,16 @@ function RootNavigationGate() {
 
   useEffect(() => {
     async function loadPendingEmail() {
-      const storedEmail = await AsyncStorage.getItem(
-        "pending_verification_email",
-      );
-      setPendingEmail(storedEmail);
-      setPendingEmailLoaded(true);
+      try {
+        const storedEmail = await AsyncStorage.getItem(
+          "pending_verification_email",
+        );
+        setPendingEmail(storedEmail);
+      } catch (error) {
+        console.error("Error loading pending email:", error);
+      } finally {
+        setPendingEmailLoaded(true);
+      }
     }
 
     loadPendingEmail();
@@ -94,57 +156,18 @@ function RootNavigationGate() {
       return false;
     }
 
-    if (
-      needsSpaceResolution &&
-      space &&
-      (hasTwoMembersLoading || hasTwoMembers === null)
-    ) {
+    if (needsSpaceResolution && space && (hasTwoMembersLoading || hasTwoMembers === null)) {
       return false;
     }
 
-    const firstSegment = segments[0];
-    const inAuthGroup = firstSegment === "(auth)";
-    const inOnboardingGroup = firstSegment === "(onboarding)";
-    const inAppGroup = firstSegment === "(app)";
-    const isVerifyOtpScreen = inAuthGroup && segments[1] === "verify-email";
-    const inSpacesGroup = firstSegment === "(app)" && segments[1] === "spaces";
-
-    if (!session && pendingEmail && !isVerifyOtpScreen) {
-      return true;
-    }
-
-    if (!session && !inAuthGroup) {
-      return true;
-    }
-
-    if (session && profile && !profile.email_verified_at && !isVerifyOtpScreen) {
-      return true;
-    }
-
-    if (
-      session &&
-      profile?.email_verified_at &&
-      !profile?.onboarding_completed &&
-      !inOnboardingGroup
-    ) {
-      return true;
-    }
-
-    if (!spaceLoading && !hasTwoMembersLoading && hasTwoMembers && (!inAppGroup || inSpacesGroup)) {
-      return true;
-    }
-
-    if (session && profile?.email_verified_at && profile.onboarding_completed) {
-      if (!spaceLoading && space === null && !inSpacesGroup) {
-        return true;
-      }
-
-      if (!spaceLoading && space && hasTwoMembers === false && !inSpacesGroup) {
-        return true;
-      }
-    }
-
-    return false;
+    return getTargetRoute({
+      session,
+      profile,
+      space,
+      hasTwoMembers,
+      pendingEmail,
+      currentSegments: segments,
+    }) !== null;
   }, [
     isNavigationReady,
     loading,
@@ -164,107 +187,44 @@ function RootNavigationGate() {
   useEffect(() => {
     if (!isNavigationReady || loading || !pendingEmailLoaded) return;
 
-    const needsSpaceResolution =
-      !!session &&
-      !!profile?.email_verified_at &&
-      !!profile?.onboarding_completed;
-
     if (needsSpaceResolution && (!spaceInitialized || spaceLoading)) {
       return;
     }
 
-    if (
-      needsSpaceResolution &&
-      space &&
-      (hasTwoMembersLoading || hasTwoMembers === null)
-    ) {
+    if (needsSpaceResolution && space && (hasTwoMembersLoading || hasTwoMembers === null)) {
       return;
     }
 
+    const target = getTargetRoute({
+      session,
+      profile,
+      space,
+      hasTwoMembers,
+      pendingEmail,
+      currentSegments: segments,
+    });
 
-    const firstSegment = segments[0];
-
-    const inAuthGroup = firstSegment === "(auth)";
-    const inOnboardingGroup = firstSegment === "(onboarding)";
-    const inAppGroup = firstSegment === "(app)";
-    const isVerifyOtpScreen = inAuthGroup && segments[1] === "verify-email";
-    const inSpacesGroup = firstSegment === "(app)" && segments[1] === "spaces";
-
-    if (!session && pendingEmail) {
-      if (!isVerifyOtpScreen) {
-        router.replace({
-          pathname: "/(auth)/verify-email",
-          params: { email: pendingEmail },
-        });
-      }
-      return;
-    }
-
-    if (!session) {
-      if (!inAuthGroup) {
-        router.replace("/(auth)/signin");
-      }
-      return;
-    }
-
-    if (session && profile && !profile.email_verified_at) {
-      if (!isVerifyOtpScreen) {
-        router.replace({
-          pathname: "/(auth)/verify-email",
-          params: { email: session.user.email ?? "" },
-        });
-      }
-      return;
-    }
-
-    if (
-      session &&
-      profile?.email_verified_at &&
-      !profile?.onboarding_completed
-    ) {
-      if (!inOnboardingGroup) {
-        router.replace({
-          pathname: "/(onboarding)",
-          params: { userId: session.user.id ?? "" },
-        });
-      }
-      return;
-    }
-    if (!spaceLoading && !hasTwoMembersLoading && hasTwoMembers) {
-      if (!inAppGroup || inSpacesGroup) {
-        router.replace("/(app)/home");
+    if (target) {
+      if (target.params) {
+        router.replace({ pathname: target.route as any, params: target.params });
+      } else {
+        router.replace(target.route as any);
       }
     }
-
-    if (session && profile?.email_verified_at && profile.onboarding_completed) {
-      if (!spaceLoading && space === null) {
-        if (!inSpacesGroup) {
-          router.replace("/(app)/spaces");
-        }
-        return;
-      }
-
-      if (!spaceLoading && space && hasTwoMembers === false) {
-        if (!inSpacesGroup) {
-          router.replace("/(app)/spaces");
-        }
-        return;
-      }
-    }
-
   }, [
     isNavigationReady,
     loading,
+    pendingEmailLoaded,
+    needsSpaceResolution,
+    spaceInitialized,
     spaceLoading,
     space,
+    hasTwoMembersLoading,
+    hasTwoMembers,
     session,
     profile,
     segments,
     pendingEmail,
-    pendingEmailLoaded,
-    hasTwoMembers,
-    hasTwoMembersLoading,
-    spaceInitialized,
   ]);
 
   const showLoadingOverlay =
@@ -293,7 +253,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <SpaceProvider>
-        <RootNavigationGate />
+        <ErrorBoundary>
+          <RootNavigationGate />
+        </ErrorBoundary>
       </SpaceProvider>
     </AuthProvider>
   );
