@@ -14,6 +14,8 @@ import {
   Alert,
   TextInput,
 } from "react-native";
+import {TEXTS} from "./../../../constants/language/es/texts"
+
 
 export default function VerifyEmailScreen() {
   const length = 6;
@@ -83,18 +85,18 @@ export default function VerifyEmailScreen() {
       <View className="gap-8 mb-20">
         <View className="gap-2">
           <AppText variant="display" className="text-center text-display pt-28">
-            Código de
+            {TEXTS.auth.verify_email_title_first_part}
           </AppText>
           <AppText variant="display" className="text-center text-display">
-            verificación
+            {TEXTS.auth.verify_email_title_second_part}
           </AppText>
         </View>
         <View className="gap-2">
           <AppText variant="caption" className="text-center">
-            Verifica tu cuenta
+            {TEXTS.auth.verify_email_subtitle}
           </AppText>
           <AppText variant="caption" className="text-center">
-            Te hemos enviado un código de verificación de 6 dígitos
+            {TEXTS.auth.verify_email_second_subtitle}
           </AppText>
         </View>
       </View>
@@ -116,25 +118,31 @@ export default function VerifyEmailScreen() {
       <View className="flex flex-row items-center justify-center pt-4 pb-6">
         <AppText>
           {seconds > 0 ? (
-            <AppText>El código se vencerá en: {timeFormat(seconds)}</AppText>
+            <AppText>
+              {TEXTS.auth.code_expiring_in} {timeFormat(seconds)}
+            </AppText>
           ) : (
-            <AppText>Código expirado</AppText>
+            <AppText>{TEXTS.auth.code_expired}</AppText>
           )}
         </AppText>
       </View>
       {seconds === 0 && (
         <View className="flex flex-row items-center justify-center pb-6">
-          <AppText>No recibiste el código? </AppText>
+          <AppText>{TEXTS.auth.no_code_sent_text}</AppText>
           <Pressable onPress={handleResend}>
-            <Text className="text-primaryDeep">Reenviar</Text>
+            <Text className="text-primaryDeep">
+              {TEXTS.auth.no_code_sent_link}
+            </Text>
           </Pressable>
         </View>
       )}
       <AppButton title="Verificar" onPress={handleVerify} className="mt-2" />
       <View className="flex flex-row items-center justify-center pb-6 mt-2">
-        <AppText>Escribiste mal tus credenciales? </AppText>
+        <AppText>{TEXTS.auth.correct_credentials_text} </AppText>
         <Pressable onPress={handleCorrectEmail}>
-          <Text className="text-primaryDeep">Volver</Text>
+          <Text className="text-primaryDeep">
+            {TEXTS.auth.correct_credentials_link}
+          </Text>
         </Pressable>
       </View>
     </View>
