@@ -45,7 +45,8 @@
         {
           "photosPermission": "La aplicación necesita acceso a tus fotos para cambiar tu imagen de perfil."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
