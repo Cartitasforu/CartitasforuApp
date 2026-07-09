@@ -18,20 +18,21 @@ export async function signUp(data: SignUpFormData) {
     password,
   });
 
-  await AsyncStorage.setItem("pending_verification_email", email);
-
+  
   if (error) {
     console.error("Supabase signUp error:", error.message, error.status);
-
+    
     if (error.message.includes("Password")) {
       throw new Error("La contraseña no cumple los requisitos mínimos.");
     }
     if (error.message.includes("rate limit") || error.status === 429) {
       throw new Error("Demasiados intentos. Espera un momento.");
     }
-
+    
     throw new Error(error.message);
   }
+  
+  await AsyncStorage.setItem("pending_verification_email", email);
 
   return body;
 }

@@ -1,5 +1,5 @@
 import { AppText } from "@/components/ui/app-text";
-import React, { useState } from "react";
+import { useState } from "react";
 import { View, Alert, Image, TouchableOpacity, Pressable } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { AppButton } from "@/components/ui/app-button";
@@ -9,7 +9,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { AppInput } from "@/components/ui/app-input";
 import { Controller, useForm } from "react-hook-form";
 import {
-  OnBoardidngFormData,
+  OnBoardingFormData,
   onBoardingSchema,
 } from "@/features/auth/schemas/on-boarding.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,7 @@ import { AppSelect } from "@/components/ui/app-select-input";
 import { InterestsPicker } from "@/components/ui/interests-picker";
 import { uploadToStorage } from "@/features/auth/api/upload-to-storage";
 import { AppCheckbox } from "@/components/ui/app-checkbox";
+import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 export default function OnboardingScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -25,12 +26,13 @@ export default function OnboardingScreen() {
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { refreshProfile } = useAuth();
+  const { handleError } = useErrorHandler();
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<OnBoardidngFormData>({
+  } = useForm<OnBoardingFormData>({
     resolver: zodResolver(onBoardingSchema),
     defaultValues: {
       full_name: "",
@@ -43,35 +45,39 @@ export default function OnboardingScreen() {
   });
 
   const pickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    try {
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (permissionResult.granted === false) {
-      Alert.alert("Se requieren permisos para acceder a la galeria");
-      return;
-    }
+      if (permissionResult.granted === false) {
+        Alert.alert("Se requieren permisos para acceder a la galeria");
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.75,
-      base64: true,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.75,
+        base64: true,
+      });
 
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-      setImage(result.assets[0]);
+      if (!result.canceled) {
+        setImageUri(result.assets[0].uri);
+        setImage(result.assets[0]);
+      }
+    } catch (error) {
+      handleError(error);
     }
   };
 
-  const onSubmit = async (values: OnBoardidngFormData) => {
+  const onSubmit = async (values: OnBoardingFormData) => {
     try {
       const imageUrl = await uploadToStorage(image);
       await completeProfile(userId, values, imageUrl);
       await refreshProfile();
     } catch (error) {
-      console.log(error);
+      handleError(error);
     }
   };
 

@@ -1,12 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { decode } from "base64-arraybuffer";
+import { ImagePickerAsset } from "expo-image-picker";
 
-export async function uploadToStorage(image: any | null) {
+export async function uploadToStorage(image: ImagePickerAsset | null) {
   if (!image) {
     return null;
   }
 
-  const imageToBase64 = image.base64;
+  const imageToBase64: string = image.base64 ?? "";
   const fileExt = image.uri.split(".").pop()?.toLowerCase() || "jpg";
   const {
     data: { user },
@@ -21,7 +22,7 @@ export async function uploadToStorage(image: any | null) {
 
   const { data, error } = await supabase.storage
     .from("profile-images")
-    .upload(filePath, decode(imageToBase64), {
+    .upload(filePath, decode(imageToBase64) , {
       upsert: true,
       contentType: image.mimeType || "image/jpeg",
     });

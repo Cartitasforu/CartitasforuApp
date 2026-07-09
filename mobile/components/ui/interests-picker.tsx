@@ -1,5 +1,5 @@
 // components/interests-picker.tsx
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Modal,
   Pressable,
@@ -44,9 +44,10 @@ export function InterestsPicker({
   error,
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
+  const selectedSet = useMemo(() => new Set(value), [value]);
 
   const toggle = (interest: string) => {
-    if (value.includes(interest)) {
+    if (selectedSet.has(interest)) {
       onChange(value.filter((i) => i !== interest));
     } else {
       if (value.length < max) {
@@ -129,7 +130,7 @@ export function InterestsPicker({
                 showsVerticalScrollIndicator={false}
               >
                 {INTERESTS_OPTIONS.map((interest) => {
-                  const isSelected = value.includes(interest);
+                  const isSelected = selectedSet.has(interest);
                   return (
                     <TouchableOpacity
                       key={interest}

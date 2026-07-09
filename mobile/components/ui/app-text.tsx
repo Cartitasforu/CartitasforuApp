@@ -1,5 +1,4 @@
 import { cn } from "@/lib/cn";
-import React from "react";
 import { Text, TextProps } from "react-native";
 
 type TextVariant =

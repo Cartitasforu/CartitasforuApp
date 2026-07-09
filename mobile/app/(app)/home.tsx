@@ -1,11 +1,16 @@
 import { logOut } from '@/features/auth/api/log-out';
-import React from 'react'
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Pressable, Text, View } from 'react-native'
 
 export default function HomeScreen () {
+  const { handleError } = useErrorHandler();
 
   const onLogOut = async () => {
-    await logOut()
+    try {
+      await logOut()
+    } catch (error) {
+      handleError(error);
+    }
   }
   return (
     <View className='mt-20 ml-10'>
