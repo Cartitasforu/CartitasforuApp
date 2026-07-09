@@ -1,7 +1,11 @@
 import { supabase } from "@/lib/supabase";
 import { decode } from "base64-arraybuffer";
 
-export async function uploadToStorage(image: any) {
+export async function uploadToStorage(image: any | null) {
+  if (!image) {
+    return null;
+  }
+
   const imageToBase64 = image.base64;
   const fileExt = image.uri.split(".").pop()?.toLowerCase() || "jpg";
   const {

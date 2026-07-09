@@ -104,6 +104,9 @@ export default function OnboardingScreen() {
             <View className="absolute w-12 h-12 bg-white rounded-full left-24 top-24 border-4 border-bgPink"></View>
           </TouchableOpacity>
         )}
+        <AppText className="text-roseGray text-[11px]">
+          La foto de perfil es opcional.
+        </AppText>
       </View>
       <View className="gap-3">
         <Controller
@@ -204,7 +207,7 @@ export default function OnboardingScreen() {
           )}
         />
       </View>
-      <View className="mt-10">
+      <View className="">
         <View>
           <AppCheckbox
             label={TEXTS.profile_setup.terms_checkbox}
