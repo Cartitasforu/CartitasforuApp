@@ -3,7 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 
 // Set the animation options. This is optional.
 SplashScreen.setOptions({
-  duration: 1000,
+  duration: 10000,
   fade: true,
 });
 
